@@ -29,6 +29,9 @@ app.get('/', (c) => {
 
 app.route('/api/v1', v1);
 
+// Redirect /api/ to docs
+app.get('/api/', (c) => c.redirect('/api/v1/docs'));
+
 // OpenAPI JSON spec with dynamic server URL
 app.doc('/api/v1/openapi.json', (c) => {
   const url = new URL(c.req.url);
