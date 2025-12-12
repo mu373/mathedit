@@ -27,14 +27,14 @@
     "clsx": "^2.1.1",
     "jszip": "^3.10.1",
     "lucide-react": "^0.468.0",
-    "react": "^18.3.1",
+    "react": "^19.2.3",
     "react-dom": "^18.3.1",
     "react-resizable-panels": "^2.1.7",
     "tailwind-merge": "^2.6.0",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
-    "@types/react": "^18.3.12",
+    "@types/react": "^19.2.7",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
