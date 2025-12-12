@@ -1,5 +1,5 @@
 {
-  "name": "mathimg",
+  "name": "@mathimg/api",
   "version": "0.1.0",
   "description": "API for converting LaTeX math equations to SVG images with embedded metadata",
   "type": "module",

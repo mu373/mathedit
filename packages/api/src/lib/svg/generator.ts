@@ -36,32 +36,64 @@ export function generateSVG(input: GenerateSVGOptions): GenerateSVGResult {
         throwOnError: true,
       });
 
+      // Check if this is a tagged equation (uses width="100%" and min-width style)
+      const isTaggedEquation = result.html.includes('width="100%"') || result.html.includes('data-labels');
+
       // Extract viewBox, width and height from MathJax SVG
       const viewBoxMatch = result.html.match(/viewBox="([^"]+)"/);
       const widthMatch = result.html.match(/width="([0-9.]+)ex"/);
       const heightMatch = result.html.match(/height="([0-9.]+)ex"/);
+      // For tagged equations, MathJax uses min-width in style
+      const minWidthMatch = result.html.match(/min-width:\s*([0-9.]+)ex/);
 
       // Parse viewBox: "minX minY width height"
       let width = 100;
       let height = 40;
       let viewBox = '0 0 100 40';
+      let svgInnerContent: string;
 
-      if (viewBoxMatch?.[1]) {
+      if (isTaggedEquation) {
+        // For tagged equations, use min-width and height from MathJax output
+        const pxPerEx = 22;
+        const minWidthEx = minWidthMatch?.[1] ? parseFloat(minWidthMatch[1]) : 20;
+        width = minWidthEx * pxPerEx;
+
+        const exHeightMatch = result.html.match(/height="([0-9.]+)ex"/);
+        height = exHeightMatch?.[1] ? parseFloat(exHeightMatch[1]) * pxPerEx : 50;
+
+        // Extract the SVG, just fix the height dimension
+        const svgMatch = result.html.match(/<svg[^>]*>[\s\S]*<\/svg>/);
+        if (svgMatch) {
+          svgInnerContent = svgMatch[0]
+            .replace(/height="[0-9.]+ex"/, `height="${height}"`);
+        } else {
+          svgInnerContent = result.html;
+        }
+
+        viewBox = `0 0 ${width} ${height}`;
+      } else if (viewBoxMatch?.[1]) {
         const [_minX, _minY, vbWidth, vbHeight] = viewBoxMatch[1].split(' ').map(parseFloat);
         viewBox = viewBoxMatch[1];
         // Scale down to reasonable pixel dimensions (divide by ~20 to get readable size)
         const scale = 0.05;
         width = (vbWidth || 100) * scale;
         height = (vbHeight || 100) * scale;
+
+        // Extract inner SVG content
+        // Use greedy match to capture nested SVGs
+        const svgContentMatch = result.html.match(/<svg[^>]*>([\s\S]*)<\/svg>/);
+        svgInnerContent = svgContentMatch?.[1] || result.html;
       } else if (widthMatch?.[1] && heightMatch?.[1]) {
         // Fallback to ex-based calculation
         width = parseFloat(widthMatch[1]) * 8;
         height = parseFloat(heightMatch[1]) * 8;
-      }
 
-      // Extract inner SVG content (everything between <svg...> and </svg>)
-      const svgContentMatch = result.html.match(/<svg[^>]*>([\s\S]*?)<\/svg>/);
-      let svgInnerContent = svgContentMatch?.[1] || result.html;
+        const svgContentMatch = result.html.match(/<svg[^>]*>([\s\S]*)<\/svg>/);
+        svgInnerContent = svgContentMatch?.[1] || result.html;
+      } else {
+        const svgContentMatch = result.html.match(/<svg[^>]*>([\s\S]*)<\/svg>/);
+        svgInnerContent = svgContentMatch?.[1] || result.html;
+      }
 
       // MathJax hardcodes stroke="black" fill="black" - we need to override or remove them
       if (input.options?.color) {
@@ -106,7 +138,23 @@ export function generateSVG(input: GenerateSVGOptions): GenerateSVGResult {
       // Wrap the MathJax SVG content in a nested SVG with preserved viewBox
       // Add color styling if specified
       const colorStyle = input.options?.color ? ` fill="${input.options.color}"` : '';
-      const svgGroup = `
+
+      let svgGroup: string;
+      if (isTaggedEquation) {
+        // For tagged equations, wrap in a container SVG with fixed dimensions
+        svgGroup = `
+  <g id="${svgGroupId}"
+     data-role="latex-equation"
+     data-equation-id="${equationId}"
+     data-latex="${escapeXmlAttribute(eqInput.latex)}"
+     data-display-mode="${equation.displayMode}"
+     transform="translate(${padding}, ${currentY})"${colorStyle}>
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      ${svgInnerContent}
+    </svg>
+  </g>`;
+      } else {
+        svgGroup = `
   <g id="${svgGroupId}"
      data-role="latex-equation"
      data-equation-id="${equationId}"
@@ -117,6 +165,7 @@ export function generateSVG(input: GenerateSVGOptions): GenerateSVGResult {
       ${svgInnerContent}
     </svg>
   </g>`;
+      }
 
       svgGroups.push(svgGroup);
 
