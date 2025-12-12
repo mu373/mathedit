@@ -6,6 +6,7 @@ import { createMetadata, serializeMetadata } from './metadata';
 export interface GenerateSVGOptions {
   equations: EquationInput[];
   options?: RenderOptions;
+  hostname?: string;
 }
 
 export interface GenerateSVGResult {
@@ -62,17 +63,17 @@ export function generateSVG(input: GenerateSVGOptions): GenerateSVGResult {
       const svgContentMatch = result.html.match(/<svg[^>]*>([\s\S]*?)<\/svg>/);
       let svgInnerContent = svgContentMatch?.[1] || result.html;
 
-      // Handle color option
+      // MathJax hardcodes stroke="black" fill="black" - we need to override or remove them
       if (input.options?.color) {
-        // Apply the specified color
+        // Replace hardcoded black with the specified color
         svgInnerContent = svgInnerContent
-          .replace(/\s+fill="[^"]*"/g, ` fill="${input.options.color}"`)
-          .replace(/\s+stroke="[^"]*"/g, ` stroke="${input.options.color}"`);
+          .replace(/stroke="black"/g, `stroke="${input.options.color}"`)
+          .replace(/fill="black"/g, `fill="${input.options.color}"`);
       } else {
-        // Remove fixed fill and stroke attributes to make SVG recolorable in apps like Keynote
+        // Remove hardcoded colors to allow CSS/inheritance control
         svgInnerContent = svgInnerContent
-          .replace(/\s+fill="[^"]*"/g, '')
-          .replace(/\s+stroke="[^"]*"/g, '');
+          .replace(/\s+stroke="black"/g, '')
+          .replace(/\s+fill="black"/g, '');
       }
 
       const equation: Equation = {
@@ -103,13 +104,15 @@ export function generateSVG(input: GenerateSVGOptions): GenerateSVGResult {
       };
 
       // Wrap the MathJax SVG content in a nested SVG with preserved viewBox
+      // Add color styling if specified
+      const colorStyle = input.options?.color ? ` fill="${input.options.color}"` : '';
       const svgGroup = `
   <g id="${svgGroupId}"
      data-role="latex-equation"
      data-equation-id="${equationId}"
      data-latex="${escapeXmlAttribute(eqInput.latex)}"
      data-display-mode="${equation.displayMode}"
-     transform="translate(${padding}, ${currentY})">
+     transform="translate(${padding}, ${currentY})"${colorStyle}>
     <svg viewBox="${viewBox}" width="${width}" height="${height}">
       ${svgInnerContent}
     </svg>
@@ -135,6 +138,7 @@ export function generateSVG(input: GenerateSVGOptions): GenerateSVGResult {
     engineVersion: renderer.getVersion(),
     engineOptions: input.options?.engineOptions ?? {},
     equations: processedEquations,
+    hostname: input.hostname,
   });
 
   const metadataXML =
@@ -157,4 +161,15 @@ ${svgGroups.join('\n')}
     metadata: input.options?.embedMetadata !== false ? metadata : undefined,
     errors,
   };
+}
+
+/**
+ * Minify SVG by removing unnecessary whitespace and newlines
+ */
+export function minifySVG(svg: string): string {
+  return svg
+    .replace(/\n\s*/g, '') // Remove newlines and indentation
+    .replace(/>\s+</g, '><') // Remove whitespace between tags
+    .replace(/\s{2,}/g, ' ') // Collapse multiple spaces to single space
+    .trim();
 }

@@ -13,9 +13,9 @@ app.use('*', errorHandler);
 
 app.get('/', (c) => {
   return c.json({
-    name: 'LaTeX to SVG API',
+    name: 'MathImg',
     version: '0.1.0',
-    description: 'API for converting LaTeX math equations to SVG with embedded metadata',
+    description: 'API for converting LaTeX math equations to SVG images with embedded metadata',
     endpoints: {
       health: '/api/v1/health',
       render: 'POST /api/v1/render',
@@ -29,20 +29,25 @@ app.get('/', (c) => {
 
 app.route('/api/v1', v1);
 
-// OpenAPI JSON spec
-app.doc('/api/v1/openapi.json', {
-  openapi: '3.1.0',
-  info: {
-    title: 'LaTeX to SVG API',
-    version: '0.1.0',
-    description: 'Convert LaTeX math equations to SVG with embedded metadata for round-trip editing',
-  },
-  servers: [
-    {
-      url: 'http://localhost:8787',
-      description: 'Development server',
+// OpenAPI JSON spec with dynamic server URL
+app.doc('/api/v1/openapi.json', (c) => {
+  const url = new URL(c.req.url);
+  const baseUrl = `${url.protocol}//${url.host}`;
+
+  return {
+    openapi: '3.1.0',
+    info: {
+      title: 'MathImg API',
+      version: '0.1.0',
+      description: 'Convert LaTeX math equations to SVG images with embedded metadata for round-trip editing',
     },
-  ],
+    servers: [
+      {
+        url: baseUrl,
+        description: 'Current server',
+      },
+    ],
+  };
 });
 
 // Swagger UI

@@ -6,6 +6,7 @@ export interface CreateMetadataOptions {
   engineVersion: string;
   engineOptions?: Record<string, unknown>;
   equations: Equation[];
+  hostname?: string;
 }
 
 export function createMetadata(options: CreateMetadataOptions): SVGMetadata {
@@ -13,8 +14,9 @@ export function createMetadata(options: CreateMetadataOptions): SVGMetadata {
 
   return {
     formatVersion: 1,
-    generator: 'latex-svg-editor',
+    generator: 'mathimg',
     generatorVersion: '0.1.0',
+    generatorHostname: options.hostname,
     documentId: uuidv4(),
     createdAt: now,
     updatedAt: now,
