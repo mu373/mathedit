@@ -38,7 +38,7 @@ export const SVGMetadataSchema = z.object({
     example: '3.2.2',
     description: 'Version of the rendering engine (MathJax) used'
   }),
-  engineOptions: z.record(z.unknown()).default({}).openapi({
+  engineOptions: z.record(z.string(), z.unknown()).default({}).openapi({
     example: {},
     description: 'Rendering engine configuration options'
   }),

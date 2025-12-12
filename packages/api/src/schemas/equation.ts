@@ -34,7 +34,7 @@ export const EquationSchema = z.object({
     .optional().openapi({
       description: 'Bounding box coordinates and dimensions (auto-calculated during rendering)'
     }),
-  customData: z.record(z.unknown()).optional().openapi({
+  customData: z.record(z.string(), z.unknown()).optional().openapi({
     example: { source: 'textbook', page: 42 },
     description: 'Custom metadata fields for application-specific data - optional'
   }),

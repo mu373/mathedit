@@ -10,7 +10,7 @@ export const RenderOptionsSchema = z.object({
     example: true,
     description: 'Whether to embed LaTeX equation metadata in the SVG for round-trip editing'
   }),
-  engineOptions: z.record(z.unknown()).optional().openapi({
+  engineOptions: z.record(z.string(), z.unknown()).optional().openapi({
     description: 'Advanced rendering engine options (MathJax-specific configuration)'
   }),
   color: z.string().optional().openapi({

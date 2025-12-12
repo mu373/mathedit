@@ -16,23 +16,23 @@
   },
   "dependencies": {
     "@hono/swagger-ui": "^0.5.2",
-    "@hono/zod-openapi": "^0.18.3",
+    "@hono/zod-openapi": "^1.1.5",
     "@hono/zod-validator": "^0.7.5",
-    "hono": "^4.6.14",
+    "hono": "^4.10.8",
     "mathjax-full": "^3.2.2",
-    "uuid": "^11.0.3",
-    "zod": "^3.23.8"
+    "uuid": "^13.0.0",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241127.0",
-    "@types/node": "^22.10.1",
-    "@types/uuid": "^10.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.17.0",
-    "@typescript-eslint/parser": "^8.17.0",
-    "eslint": "^9.16.0",
-    "prettier": "^3.4.2",
-    "typescript": "^5.7.2",
-    "vitest": "^2.1.8",
+    "@cloudflare/workers-types": "^4.20251212.0",
+    "@types/node": "^25.0.1",
+    "@types/uuid": "^11.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.49.0",
+    "@typescript-eslint/parser": "^8.49.0",
+    "eslint": "^9.39.1",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15",
     "wrangler": "^4.54.0"
   },
   "engines": {
