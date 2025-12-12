@@ -1,14 +1,14 @@
-import { Hono } from 'hono';
+import { OpenAPIHono } from '@hono/zod-openapi';
 import health from './health';
 import render from './render';
 import parse from './parse';
 import validate from './validate';
 
-const v0 = new Hono();
+const v1 = new OpenAPIHono();
 
-v0.route('/health', health);
-v0.route('/render', render);
-v0.route('/parse', parse);
-v0.route('/validate', validate);
+v1.route('/health', health);
+v1.route('/render', render);
+v1.route('/parse', parse);
+v1.route('/validate', validate);
 
-export default v0;
+export default v1;
