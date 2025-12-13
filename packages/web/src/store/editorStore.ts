@@ -635,9 +635,33 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           const lines = newDoc.split('\n');
           const existingEq = tab.parsedEquations.find((e) => e.id === eq.id);
           if (existingEq) {
-            const beforeLines = lines.slice(0, existingEq.startLine);
-            const afterLines = lines.slice(existingEq.endLine + 1);
-            newDoc = [...beforeLines, latexWithLabel, ...afterLines].join('\n');
+            // Find the separator before this equation
+            let separatorLine = existingEq.startLine - 1;
+            while (separatorLine >= 0 && lines[separatorLine].trim() === '') {
+              separatorLine--;
+            }
+
+            // Check if there's a separator (---) before the equation
+            const hasSeparatorBefore = separatorLine >= 0 && /^---+$/.test(lines[separatorLine].trim());
+            const startReplaceLine = hasSeparatorBefore ? separatorLine : existingEq.startLine;
+
+            // Check if there's a separator (---) after the equation
+            let afterLine = existingEq.endLine + 1;
+            while (afterLine < lines.length && lines[afterLine].trim() === '') {
+              afterLine++;
+            }
+            const hasSeparatorAfter = afterLine < lines.length && /^---+$/.test(lines[afterLine].trim());
+            const endReplaceLine = hasSeparatorAfter ? afterLine : existingEq.endLine;
+
+            const beforeLines = lines.slice(0, startReplaceLine);
+            const afterLines = lines.slice(endReplaceLine + 1);
+
+            // Add separator with blank lines if needed
+            const replacement = hasSeparatorBefore
+              ? ['---', '', latexWithLabel, '']
+              : [latexWithLabel];
+
+            newDoc = [...beforeLines, ...replacement, ...afterLines].join('\n');
           }
         } else if (!existingIds.has(eq.id)) {
           if (!newDoc.endsWith('\n\n')) {
