@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from './ui/dialog';
 import { Button } from './ui/button';
-import { parseSvg, generateSVG, type EquationInput } from '@mathimg/core';
+import { parseSvg, generateSVG, type EquationInput } from '@mathedit/core';
 
 export function EditorLayout() {
   const {

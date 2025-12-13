@@ -2,7 +2,7 @@ import { forwardRef } from 'react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Download, Copy } from 'lucide-react';
-import { ParsedEquation, exportSingleSVG } from '@mathimg/core';
+import { ParsedEquation, exportSingleSVG } from '@mathedit/core';
 import { cn } from '@/lib/utils';
 import { toast } from './ui/use-toast';
 

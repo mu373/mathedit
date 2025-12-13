@@ -1,6 +1,6 @@
 import { Menu, FolderOpen, Save, Download, FileUp, FilePlus, Clipboard, Lightbulb } from 'lucide-react';
 import { useEditorStore } from '@/store';
-import { openProjectFromInput, downloadProject, exportAllSVGs, importSvgFromInput } from '@mathimg/core';
+import { openProjectFromInput, downloadProject, exportAllSVGs, importSvgFromInput } from '@mathedit/core';
 import { toast } from './ui/use-toast';
 import { Button } from './ui/button';
 import {
@@ -36,7 +36,7 @@ export function Toolbar({ onImportSvgFromClipboard }: ToolbarProps) {
       const file = await openProjectFromInput();
       if (!file) return;
 
-      const data = await import('@mathimg/core').then(mod => mod.openProject(file));
+      const data = await import('@mathedit/core').then(mod => mod.openProject(file));
       openProject(data, file.name);
       toast({ title: 'Project opened successfully' });
     } catch (error) {

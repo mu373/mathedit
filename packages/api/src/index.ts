@@ -13,7 +13,7 @@ app.use('*', errorHandler);
 
 app.get('/', (c) => {
   return c.json({
-    name: 'MathImg',
+    name: 'MathEdit',
     version: '0.1.0',
     description: 'API for converting LaTeX math equations to SVG images with embedded metadata',
     endpoints: {
@@ -40,7 +40,7 @@ app.doc('/api/v1/openapi.json', (c) => {
   return {
     openapi: '3.1.0',
     info: {
-      title: 'MathImg API',
+      title: 'MathEdit API',
       version: '0.1.0',
       description: 'Convert LaTeX math equations to SVG images with embedded metadata for round-trip editing',
     },

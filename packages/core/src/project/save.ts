@@ -13,7 +13,7 @@ export function createProjectData(
       name,
       createdAt: now,
       updatedAt: now,
-      generator: "mathimg-web",
+      generator: "mathedit-web",
       generatorVersion: "0.1.0",
     },
     globalPreamble,
@@ -28,7 +28,7 @@ export function downloadProject(data: ProjectData, sourceFileName?: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = sourceFileName || `mathimg-project-${Date.now()}.json`;
+  a.download = sourceFileName || `mathedit-project-${Date.now()}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }

@@ -14,7 +14,7 @@ export function createMetadata(options: CreateMetadataOptions): SVGMetadata {
 
   return {
     formatVersion: 1,
-    generator: 'mathimg',
+    generator: 'mathedit',
     generatorVersion: '0.1.0',
     generatorHostname: options.hostname,
     documentId: uuidv4(),

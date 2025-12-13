@@ -4,7 +4,7 @@ export interface ProjectData {
     name?: string;
     createdAt: string;
     updatedAt: string;
-    generator: "mathimg-web";
+    generator: "mathedit-web";
     generatorVersion: string;
   };
   globalPreamble?: string;

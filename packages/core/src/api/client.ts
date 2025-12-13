@@ -5,7 +5,7 @@ import {
   HealthResponse,
 } from './types';
 
-export class MathImgClient {
+export class MathEditClient {
   private baseUrl: string;
 
   constructor(baseUrl: string = 'http://localhost:3000') {

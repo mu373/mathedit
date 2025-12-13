@@ -4,16 +4,16 @@ import {
   ParsedEquation,
   parseDocumentWithFrontmatter,
   DocumentFrontmatter,
-  MathImgClient,
+  MathEditClient,
   ProjectData,
   createProjectData,
   importSvg,
   generateSVG,
   type EquationInput,
-} from '@mathimg/core';
+} from '@mathedit/core';
 
 // localStorage persistence
-const STORAGE_KEY = 'mathimg:editor';
+const STORAGE_KEY = 'mathedit:editor';
 
 export interface Tab {
   id: string;
@@ -82,7 +82,7 @@ interface EditorState {
   autoRender: boolean;
 
   // API Client
-  apiClient: MathImgClient;
+  apiClient: MathEditClient;
 
   // Tab management actions
   addTab: (tab?: { fileName?: string; sourceFileName?: string; document?: string; globalPreamble?: string }) => string;
@@ -185,7 +185,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   isRendering: false,
   renderError: null,
   autoRender: true,
-  apiClient: new MathImgClient('http://localhost:3000'),
+  apiClient: new MathEditClient('http://localhost:3000'),
 
   // Tab management
   addTab: (tabOptions) => {

@@ -166,7 +166,7 @@ render.openapi(renderJsonRoute, async (c) => {
 
   return c.body(result.svg, 200, {
     'Content-Type': 'image/svg+xml',
-    'Content-Disposition': `attachment; filename="mathimg-${timestamp}.svg"`,
+    'Content-Disposition': `attachment; filename="mathedit-${timestamp}.svg"`,
   });
 });
 

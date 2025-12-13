@@ -6,8 +6,8 @@ export const SVGMetadataSchema = z.object({
     example: 1,
     description: 'Metadata format version for compatibility tracking'
   }),
-  generator: z.string().default('mathimg').openapi({
-    example: 'mathimg',
+  generator: z.string().default('mathedit').openapi({
+    example: 'mathedit',
     description: 'Name of the tool that generated this SVG'
   }),
   generatorVersion: z.string().default('0.1.0').openapi({
@@ -15,7 +15,7 @@ export const SVGMetadataSchema = z.object({
     description: 'Version of the generator tool'
   }),
   generatorHostname: z.string().optional().openapi({
-    example: 'mathimg.example.workers.dev',
+    example: 'mathedit.example.workers.dev',
     description: 'Hostname of the server that generated this SVG'
   }),
   documentId: z.string().uuid().openapi({

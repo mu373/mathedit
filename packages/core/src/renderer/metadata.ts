@@ -33,7 +33,7 @@ export interface CreateMetadataOptions {
 
 export function createMetadata(options: CreateMetadataOptions): RendererMetadata {
   return {
-    generator: 'mathimg-web',
+    generator: 'mathedit-web',
     generatorVersion: '0.1.0',
     generatedAt: new Date().toISOString(),
     globalPreamble: options.globalPreamble,

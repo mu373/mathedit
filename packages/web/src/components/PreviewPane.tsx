@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { ParsedEquation } from '@mathimg/core';
+import { ParsedEquation } from '@mathedit/core';
 import { EquationCard } from './EquationCard';
 import { useEditorStore } from '@/store';
 

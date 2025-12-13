@@ -20,7 +20,7 @@ export async function exportAllSVGs(
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `mathimg-equations-${Date.now()}.zip`;
+  a.download = `mathedit-equations-${Date.now()}.zip`;
   a.click();
   URL.revokeObjectURL(url);
 }

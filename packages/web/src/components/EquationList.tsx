@@ -1,4 +1,4 @@
-import { ParsedEquation } from '@mathimg/core';
+import { ParsedEquation } from '@mathedit/core';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Plus } from 'lucide-react';

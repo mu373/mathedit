@@ -8,7 +8,7 @@ function App() {
 
   // Hydrate from localStorage on mount, or render default document
   useEffect(() => {
-    const stored = localStorage.getItem('mathimg:editor');
+    const stored = localStorage.getItem('mathedit:editor');
     if (stored) {
       hydrateFromStorage();
     } else {
