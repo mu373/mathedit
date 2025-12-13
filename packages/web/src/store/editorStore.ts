@@ -123,28 +123,6 @@ interface EditorState {
   getActiveTab: () => Tab | undefined;
 }
 
-const INITIAL_DOCUMENT = `define.primary: #FF6B6B
-define.secondary: #4ECDC4
-define.accent: #FFE66D
-
----
-
-E=mc^2
-\\label{eq:energy}
-
----
-
-\\color{primary} y=ax^2+bx+c
-
----
-
-\\color{secondary} F=ma
-\\label{eq:newton}
-
----
-
-`;
-
 const EMPTY_DOCUMENT = `---
 
 `;
@@ -158,8 +136,8 @@ const generateTabId = () => `tab-${++tabIdCounter}`;
 let untitledCounter = 0;
 const generateUntitledName = () => `Untitled-${++untitledCounter}`;
 
-function createTab(options?: { id?: string; fileName?: string; sourceFileName?: string; document?: string; globalPreamble?: string; useEmptyDocument?: boolean }): Tab {
-  const doc = options?.document ?? (options?.useEmptyDocument ? EMPTY_DOCUMENT : INITIAL_DOCUMENT);
+function createTab(options?: { id?: string; fileName?: string; sourceFileName?: string; document?: string; globalPreamble?: string }): Tab {
+  const doc = options?.document ?? EMPTY_DOCUMENT;
   const parsed = parseDocumentWithFrontmatter(doc);
   return {
     id: options?.id ?? generateTabId(),
@@ -209,7 +187,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   // Tab management
   addTab: (tabOptions) => {
-    const newTab = createTab({ ...tabOptions, useEmptyDocument: true });
+    const newTab = createTab(tabOptions);
     set((state) => {
       const newState = {
         tabs: [...state.tabs, newTab],
