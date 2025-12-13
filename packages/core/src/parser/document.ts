@@ -171,11 +171,14 @@ export function parseDocumentWithFrontmatter(
           if (isFirstSection && isFrontmatter(content)) {
             frontmatter = parseFrontmatter(content);
           } else {
-            const label = extractLabel(content) || `eq${++equationIndex}`;
+            const explicitLabel = extractLabel(content);
+            const label = explicitLabel || `eq${++equationIndex}`;
             const color = extractColor(content);
 
-            // Reuse ID from previous equation at same position, or generate new one
-            const previousEq = previousEquations?.[sectionIndex];
+            // Reuse ID from previous equation: match by explicit label, or by latex content if no label
+            const previousEq = explicitLabel
+              ? previousEquations?.find(eq => eq.label === label)
+              : previousEquations?.find(eq => eq.latex === replaceColorReferences(content, frontmatter.colorPresets));
             const id = previousEq?.id || generateId();
 
             sections.push({
@@ -208,10 +211,13 @@ export function parseDocumentWithFrontmatter(
       if (isFirstSection && isFrontmatter(content)) {
         frontmatter = parseFrontmatter(content);
       } else {
-        const label = extractLabel(content) || `eq${++equationIndex}`;
+        const explicitLabel = extractLabel(content);
+        const label = explicitLabel || `eq${++equationIndex}`;
         const color = extractColor(content);
 
-        const previousEq = previousEquations?.[sectionIndex];
+        const previousEq = explicitLabel
+          ? previousEquations?.find(eq => eq.label === label)
+          : previousEquations?.find(eq => eq.latex === replaceColorReferences(content, frontmatter.colorPresets));
         const id = previousEq?.id || generateId();
 
         sections.push({

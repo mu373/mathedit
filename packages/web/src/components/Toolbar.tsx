@@ -1,4 +1,4 @@
-import { Menu, FolderOpen, Save, Download, FileUp, FilePlus, Clipboard } from 'lucide-react';
+import { Menu, FolderOpen, Save, Download, FileUp, FilePlus, Clipboard, Lightbulb } from 'lucide-react';
 import { useEditorStore } from '@/store';
 import { openProjectFromInput, downloadProject, exportAllSVGs, importSvgFromInput } from '@mathimg/core';
 import { toast } from './ui/use-toast';
@@ -17,6 +17,34 @@ interface ToolbarProps {
   onImportSvgFromClipboard: () => Promise<string | null>;
 }
 
+const SAMPLE_DOCUMENT = `% Frontmatter (optional)
+
+% Set variables with define.*
+define.highlight: rgba(255, 0, 102, 1)
+
+% Or you can also set global color
+% color: blue
+
+---
+% Use --- to split equation images
+
+E = mc^2
+\\label{eq:energy}
+
+---
+
+\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\color{highlight} \\sqrt{\\pi}
+\\label{eq:gaussian}
+
+---
+
+\\mathbf{F} = m\\mathbf{a}
+\\label{eq:newton}
+
+---
+
+`;
+
 export function Toolbar({ onImportSvgFromClipboard }: ToolbarProps) {
   const {
     newProject,
@@ -24,6 +52,8 @@ export function Toolbar({ onImportSvgFromClipboard }: ToolbarProps) {
     openProject,
     importSvgEquations,
     getActiveTab,
+    addTab,
+    renderAll,
   } = useEditorStore();
 
   const activeTab = getActiveTab();
@@ -108,6 +138,23 @@ export function Toolbar({ onImportSvgFromClipboard }: ToolbarProps) {
     }
   };
 
+  const handleOpenSample = () => {
+    try {
+      addTab({
+        fileName: 'Sample Project',
+        document: SAMPLE_DOCUMENT,
+      });
+      renderAll();
+      toast({ title: 'Sample project opened' });
+    } catch (error) {
+      toast({
+        title: 'Failed to open sample project',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="flex items-center border-b border-border bg-muted min-h-[40px]">
       <Menubar className="border-0 rounded-none bg-transparent shadow-none h-auto p-0">
@@ -119,6 +166,10 @@ export function Toolbar({ onImportSvgFromClipboard }: ToolbarProps) {
             <MenubarItem onClick={newProject}>
               <FilePlus className="size-4" />
               New Project
+            </MenubarItem>
+            <MenubarItem onClick={handleOpenSample}>
+              <Lightbulb className="size-4" />
+              Open Sample Project
             </MenubarItem>
             <MenubarItem onClick={handleOpenProject}>
               <FolderOpen className="size-4" />
