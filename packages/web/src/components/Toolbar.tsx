@@ -17,7 +17,7 @@ interface ToolbarProps {
   onImportSvgFromClipboard: () => Promise<string | null>;
 }
 
-const SAMPLE_DOCUMENT = `% Frontmatter (optional)
+const SAMPLE_DOCUMENT = String.raw`% Frontmatter (optional)
 
 % Set variables with define.*
 define.highlight: rgba(255, 0, 102, 1)
@@ -29,17 +29,27 @@ define.highlight: rgba(255, 0, 102, 1)
 % Use --- to split equation images
 
 E = mc^2
-\\label{eq:energy}
+\label{eq:energy}
 
 ---
 
-\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\color{highlight} \\sqrt{\\pi}
-\\label{eq:gaussian}
+\int_{-\infty}^{\infty} e^{-x^2} dx = \color{highlight} \sqrt{\pi}
+\label{eq:gaussian}
 
 ---
 
-\\mathbf{F} = m\\mathbf{a}
-\\label{eq:newton}
+\mathbf{F} = m\mathbf{a}
+\label{eq:newton}
+
+---
+
+% Use \\ for line breaks within aligned environment
+\begin{aligned}
+x &= 1 \\
+y &= 2 \\
+z &= 3
+\end{aligned}
+\label{eq:multiline}
 
 ---
 
