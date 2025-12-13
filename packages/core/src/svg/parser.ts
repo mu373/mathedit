@@ -24,7 +24,7 @@ export function parseSvg(svgContent: string): ParseSVGResult {
   try {
     // Try to extract metadata block first
     const metadataMatch = svgContent.match(
-      /<metadata[^>]*id="latex-equations"[^>]*>([\s\S]*?)<\/metadata>/
+      /<metadata[^>]*?id="latex-equations"[^>]*?>([\s\S]*?)<\/metadata>/
     );
 
     if (metadataMatch) {
@@ -50,7 +50,7 @@ export function parseSvg(svgContent: string): ParseSVGResult {
 
     // Fallback: try to extract from data attributes on groups
     const groupMatches = svgContent.matchAll(
-      /<g[^>]*data-role="latex-equation"[^>]*>/g
+      /<g[^>]*?data-role="latex-equation"[^>]*?>/g
     );
 
     for (const match of groupMatches) {
@@ -67,7 +67,7 @@ export function parseSvg(svgContent: string): ParseSVGResult {
           .replace(/&apos;/g, "'") || '';
 
         // Try to extract label from the latex itself
-        const labelMatch = latex.match(/\\label\{([^}]+)\}/);
+        const labelMatch = latex.match(/\\label\{([\w:.-]+)\}/);
         equations.push({
           id: idMatch?.[1] || crypto.randomUUID(),
           latex,

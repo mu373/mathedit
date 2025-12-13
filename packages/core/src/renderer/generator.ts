@@ -76,7 +76,7 @@ export function generateSVG(input: GenerateSVGOptions): GenerateSVGResult {
         height = exHeightMatch?.[1] ? parseFloat(exHeightMatch[1]) * pxPerEx : 50;
 
         // Extract the SVG, just fix the height dimension
-        const svgMatch = result.html.match(/<svg[^>]*>[\s\S]*<\/svg>/);
+        const svgMatch = result.html.match(/<svg[^>]*>[\s\S]*?<\/svg>/);
         if (svgMatch) {
           svgInnerContent = svgMatch[0]
             .replace(/height="[0-9.]+ex"/, `height="${height}"`);
@@ -94,18 +94,18 @@ export function generateSVG(input: GenerateSVGOptions): GenerateSVGResult {
         height = (vbHeight || 100) * scale;
 
         // Extract inner SVG content
-        // Use greedy match to capture nested SVGs
-        const svgContentMatch = result.html.match(/<svg[^>]*>([\s\S]*)<\/svg>/);
+        // Use non-greedy match to prevent ReDoS
+        const svgContentMatch = result.html.match(/<svg[^>]*>([\s\S]*?)<\/svg>/);
         svgInnerContent = svgContentMatch?.[1] || result.html;
       } else if (widthMatch?.[1] && heightMatch?.[1]) {
         // Fallback to ex-based calculation
         width = parseFloat(widthMatch[1]) * 8;
         height = parseFloat(heightMatch[1]) * 8;
 
-        const svgContentMatch = result.html.match(/<svg[^>]*>([\s\S]*)<\/svg>/);
+        const svgContentMatch = result.html.match(/<svg[^>]*>([\s\S]*?)<\/svg>/);
         svgInnerContent = svgContentMatch?.[1] || result.html;
       } else {
-        const svgContentMatch = result.html.match(/<svg[^>]*>([\s\S]*)<\/svg>/);
+        const svgContentMatch = result.html.match(/<svg[^>]*>([\s\S]*?)<\/svg>/);
         svgInnerContent = svgContentMatch?.[1] || result.html;
       }
 
@@ -117,8 +117,8 @@ export function generateSVG(input: GenerateSVGOptions): GenerateSVGResult {
       } else {
         // Remove hardcoded colors to allow CSS/inheritance control
         svgInnerContent = svgInnerContent
-          .replace(/\s+stroke="black"/g, '')
-          .replace(/\s+fill="black"/g, '');
+          .replace(/ stroke="black"/g, '')
+          .replace(/ fill="black"/g, '');
       }
 
       const equation: Equation = {

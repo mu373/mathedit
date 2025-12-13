@@ -15,7 +15,7 @@ function generateId(): string {
 }
 
 function extractLabel(latex: string): string | null {
-  const match = latex.match(/\\label\{([^}]+)\}/);
+  const match = latex.match(/\\label\{([\w:.-]+)\}/);
   return match ? match[1] : null;
 }
 
@@ -49,7 +49,7 @@ function replaceColorReferences(latex: string, presets: Record<string, string> |
   ]);
 
   // Replace \color{name} where name is a custom preset
-  return latex.replace(/\\color\{([^}]+)\}/g, (match, colorName) => {
+  return latex.replace(/\\color\{([\w#-]+)\}/g, (match, colorName) => {
     // If it's a standard color, leave it as is
     if (standardColors.has(colorName.toLowerCase())) {
       return match;
@@ -77,7 +77,7 @@ function extractColor(latex: string): string | null {
     const trimmed = lines[i].trim();
     if (!trimmed) continue;
 
-    const match = trimmed.match(/^%\s*color:\s*(.+)$/);
+    const match = trimmed.match(/^%\s*color:\s*(\S.*)$/);
     return match ? match[1].trim() : null;
   }
   return null;
@@ -92,7 +92,7 @@ function parseFrontmatter(content: string): DocumentFrontmatter {
     // Skip comment lines
     if (line.trim().startsWith('%')) continue;
 
-    const match = line.match(/^([\w.]+):\s*(.+)$/);
+    const match = line.match(/^([\w.]+):\s*(\S.*)$/);
     if (match) {
       const [, key, value] = match;
       if (key === 'color') {
@@ -132,7 +132,7 @@ function isFrontmatter(content: string): boolean {
     if (trimmed.includes('\\')) return false;
 
     // Check for key: value pattern (including define.name format)
-    if (/^[\w.]+:\s*.+$/.test(trimmed)) {
+    if (/^[\w.]+:\s*\S/.test(trimmed)) {
       hasKeyValue = true;
     }
   }
