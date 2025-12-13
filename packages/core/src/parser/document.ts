@@ -35,6 +35,38 @@ function resolveColor(color: string | undefined, presets: Record<string, string>
 }
 
 /**
+ * Replace \color{name} with \color{hexvalue} for custom color presets
+ * Standard LaTeX colors are left unchanged
+ */
+function replaceColorReferences(latex: string, presets: Record<string, string> | undefined): string {
+  if (!presets || Object.keys(presets).length === 0) return latex;
+
+  // Standard LaTeX/xcolor color names (leave these unchanged)
+  const standardColors = new Set([
+    'black', 'white', 'red', 'green', 'blue', 'cyan', 'magenta', 'yellow',
+    'darkgray', 'gray', 'lightgray', 'brown', 'lime', 'olive', 'orange', 'pink',
+    'purple', 'teal', 'violet'
+  ]);
+
+  // Replace \color{name} where name is a custom preset
+  return latex.replace(/\\color\{([^}]+)\}/g, (match, colorName) => {
+    // If it's a standard color, leave it as is
+    if (standardColors.has(colorName.toLowerCase())) {
+      return match;
+    }
+
+    // If it's a custom preset, replace with hex value
+    const hexValue = presets[colorName];
+    if (hexValue) {
+      return `\\color{${hexValue}}`;
+    }
+
+    // Otherwise leave unchanged
+    return match;
+  });
+}
+
+/**
  * Extract color directive from comment at end of content: % color: #ff0000
  * Only matches if it's the last non-empty line
  */
@@ -149,7 +181,7 @@ export function parseDocumentWithFrontmatter(
             sections.push({
               id,
               label,
-              latex: content,
+              latex: replaceColorReferences(content, frontmatter.colorPresets),
               startLine,
               endLine: i - 1,
               color: resolveColor(color || undefined, frontmatter.colorPresets),
@@ -185,7 +217,7 @@ export function parseDocumentWithFrontmatter(
         sections.push({
           id,
           label,
-          latex: content,
+          latex: replaceColorReferences(content, frontmatter.colorPresets),
           startLine,
           endLine: lines.length - 1,
           color: resolveColor(color || undefined, frontmatter.colorPresets),

@@ -134,14 +134,12 @@ E=mc^2
 
 ---
 
-y=ax^2+bx+c
-% color: $primary
+\\color{primary} y=ax^2+bx+c
 
 ---
 
-F=ma
+\\color{secondary} F=ma
 \\label{eq:newton}
-% color: $secondary
 
 ---
 
