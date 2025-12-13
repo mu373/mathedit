@@ -9,6 +9,7 @@ export interface ParsedEquation {
 
 export interface DocumentFrontmatter {
   color?: string;
+  colorPresets?: Record<string, string>;
 }
 
 export interface ParsedDocument {

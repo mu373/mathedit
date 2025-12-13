@@ -123,17 +123,33 @@ interface EditorState {
   getActiveTab: () => Tab | undefined;
 }
 
-const DEFAULT_DOCUMENT = `E=mc^2
+const INITIAL_DOCUMENT = `define.primary: #FF6B6B
+define.secondary: #4ECDC4
+define.accent: #FFE66D
+
+---
+
+E=mc^2
 \\label{eq:energy}
 
 ---
 
 y=ax^2+bx+c
+% color: $primary
 
 ---
 
 F=ma
-\\label{eq:newton}`;
+\\label{eq:newton}
+% color: $secondary
+
+---
+
+`;
+
+const EMPTY_DOCUMENT = `---
+
+`;
 
 // Debounce timer for auto-render
 let renderDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -144,8 +160,8 @@ const generateTabId = () => `tab-${++tabIdCounter}`;
 let untitledCounter = 0;
 const generateUntitledName = () => `Untitled-${++untitledCounter}`;
 
-function createTab(options?: { id?: string; fileName?: string; sourceFileName?: string; document?: string; globalPreamble?: string }): Tab {
-  const doc = options?.document ?? DEFAULT_DOCUMENT;
+function createTab(options?: { id?: string; fileName?: string; sourceFileName?: string; document?: string; globalPreamble?: string; useEmptyDocument?: boolean }): Tab {
+  const doc = options?.document ?? (options?.useEmptyDocument ? EMPTY_DOCUMENT : INITIAL_DOCUMENT);
   const parsed = parseDocumentWithFrontmatter(doc);
   return {
     id: options?.id ?? generateTabId(),
@@ -195,7 +211,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   // Tab management
   addTab: (tabOptions) => {
-    const newTab = createTab(tabOptions);
+    const newTab = createTab({ ...tabOptions, useEmptyDocument: true });
     set((state) => {
       const newState = {
         tabs: [...state.tabs, newTab],
@@ -599,7 +615,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   saveProject: () => {
     const tab = get().getActiveTab();
     if (!tab) {
-      return { data: createProjectData(DEFAULT_DOCUMENT, '', 'Untitled') };
+      return { data: createProjectData(EMPTY_DOCUMENT, '', 'Untitled') };
     }
 
     // Mark as clean after save

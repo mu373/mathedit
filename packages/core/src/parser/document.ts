@@ -20,6 +20,21 @@ function extractLabel(latex: string): string | null {
 }
 
 /**
+ * Resolve color value - if it starts with $, look it up in presets
+ */
+function resolveColor(color: string | undefined, presets: Record<string, string> | undefined): string | undefined {
+  if (!color) return undefined;
+
+  // Check if it's a preset reference ($name)
+  if (color.startsWith('$')) {
+    const presetName = color.substring(1);
+    return presets?.[presetName] || color; // Fall back to original if not found
+  }
+
+  return color;
+}
+
+/**
  * Extract color directive from comment at end of content: % color: #ff0000
  * Only matches if it's the last non-empty line
  */
@@ -38,19 +53,32 @@ function extractColor(latex: string): string | null {
 
 function parseFrontmatter(content: string): DocumentFrontmatter {
   const frontmatter: DocumentFrontmatter = {};
+  const colorPresets: Record<string, string> = {};
   const lines = content.split('\n');
 
   for (const line of lines) {
     // Skip comment lines
     if (line.trim().startsWith('%')) continue;
 
-    const match = line.match(/^(\w+):\s*(.+)$/);
+    const match = line.match(/^([\w.]+):\s*(.+)$/);
     if (match) {
       const [, key, value] = match;
       if (key === 'color') {
         frontmatter.color = value.trim();
+      } else if (key.startsWith('define.')) {
+        const presetName = key.substring(7); // Remove 'define.' prefix
+        colorPresets[presetName] = value.trim();
       }
     }
+  }
+
+  if (Object.keys(colorPresets).length > 0) {
+    frontmatter.colorPresets = colorPresets;
+  }
+
+  // Resolve the global color if it references a preset
+  if (frontmatter.color) {
+    frontmatter.color = resolveColor(frontmatter.color, colorPresets);
   }
 
   return frontmatter;
@@ -71,8 +99,8 @@ function isFrontmatter(content: string): boolean {
     // Check for LaTeX commands
     if (trimmed.includes('\\')) return false;
 
-    // Check for key: value pattern
-    if (/^\w+:\s*.+$/.test(trimmed)) {
+    // Check for key: value pattern (including define.name format)
+    if (/^[\w.]+:\s*.+$/.test(trimmed)) {
       hasKeyValue = true;
     }
   }
@@ -124,7 +152,7 @@ export function parseDocumentWithFrontmatter(
               latex: content,
               startLine,
               endLine: i - 1,
-              color: color || undefined,
+              color: resolveColor(color || undefined, frontmatter.colorPresets),
             });
 
             sectionIndex++;
@@ -160,7 +188,7 @@ export function parseDocumentWithFrontmatter(
           latex: content,
           startLine,
           endLine: lines.length - 1,
-          color: color || undefined,
+          color: resolveColor(color || undefined, frontmatter.colorPresets),
         });
       }
     }
