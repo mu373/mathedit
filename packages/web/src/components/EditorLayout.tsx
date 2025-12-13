@@ -196,11 +196,12 @@ export function EditorLayout() {
     return existing?.latex || null;
   }, [duplicateLabels, parsedEquations]);
 
-  // Generate preview SVGs for comparison
+  // Generate preview SVGs for comparison - renders fresh from current LaTeX text
   const previewSvgs = useMemo(() => {
-    if (!currentEquationLatex || !pendingNewLatex) return null;
+    if (!pendingNewLatex) return null;
 
-    const renderPreview = (latex: string) => {
+    const renderPreview = (latex: string | null) => {
+      if (!latex) return null;
       try {
         const input: EquationInput[] = [{ latex, displayMode: 'block' }];
         const result = generateSVG({ equations: input, options: { embedMetadata: false } });
