@@ -142,7 +142,8 @@ struct ContentView: View {
         panel.nameFieldStringValue = "\(equation.label).svg"
 
         if panel.runModal() == .OK, let url = panel.url {
-            try? svg.write(to: url, atomically: true, encoding: .utf8)
+            let exportSVG = wrapSVGWithMetadata(svg: svg, equation: equation)
+            try? exportSVG.write(to: url, atomically: true, encoding: .utf8)
         }
     }
 
@@ -158,7 +159,8 @@ struct ContentView: View {
                 if let svg = document.renderedSVGs[equation.id] {
                     let filename = "\(equation.label.replacingOccurrences(of: ":", with: "_")).svg"
                     let fileURL = directory.appendingPathComponent(filename)
-                    try? svg.write(to: fileURL, atomically: true, encoding: .utf8)
+                    let exportSVG = wrapSVGWithMetadata(svg: svg, equation: equation)
+                    try? exportSVG.write(to: fileURL, atomically: true, encoding: .utf8)
                 }
             }
         }
@@ -166,19 +168,12 @@ struct ContentView: View {
 
     private func copySelectedSVGToClipboard() {
         guard let id = highlightedEquationId,
-              let svg = document.renderedSVGs[id] else {
+              let svg = document.renderedSVGs[id],
+              let equation = document.equations.first(where: { $0.id == id }) else {
             return
         }
 
-        // Ensure SVG has xmlns
-        var fullSVG = svg
-        if !fullSVG.contains("xmlns=") {
-            fullSVG = fullSVG.replacingOccurrences(
-                of: "<svg",
-                with: "<svg xmlns=\"http://www.w3.org/2000/svg\""
-            )
-        }
-        fullSVG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\(fullSVG)"
+        let fullSVG = wrapSVGWithMetadata(svg: svg, equation: equation)
 
         guard let svgData = fullSVG.data(using: .utf8) else { return }
 
@@ -187,6 +182,94 @@ struct ContentView: View {
         NSPasteboard.general.setData(svgData, forType: NSPasteboard.PasteboardType("public.svg-image"))
         // Also copy as plain text fallback
         NSPasteboard.general.setString(fullSVG, forType: .string)
+    }
+
+    /// Wrap raw MathJax SVG with metadata for round-trip import/export
+    private func wrapSVGWithMetadata(svg: String, equation: Equation) -> String {
+        // Extract dimensions from the SVG
+        let widthMatch = svg.range(of: #"width="([^"]+)""#, options: .regularExpression)
+        let heightMatch = svg.range(of: #"height="([^"]+)""#, options: .regularExpression)
+        let viewBoxMatch = svg.range(of: #"viewBox="([^"]+)""#, options: .regularExpression)
+
+        var width = "100"
+        var height = "50"
+        var viewBox = "0 0 100 50"
+
+        if let match = widthMatch {
+            let fullMatch = String(svg[match])
+            if let start = fullMatch.range(of: "=\""), let end = fullMatch.lastIndex(of: "\"") {
+                width = String(fullMatch[start.upperBound..<end])
+            }
+        }
+        if let match = heightMatch {
+            let fullMatch = String(svg[match])
+            if let start = fullMatch.range(of: "=\""), let end = fullMatch.lastIndex(of: "\"") {
+                height = String(fullMatch[start.upperBound..<end])
+            }
+        }
+        if let match = viewBoxMatch {
+            let fullMatch = String(svg[match])
+            if let start = fullMatch.range(of: "=\""), let end = fullMatch.lastIndex(of: "\"") {
+                viewBox = String(fullMatch[start.upperBound..<end])
+            }
+        }
+
+        // Extract inner content from MathJax SVG
+        var innerContent = svg
+        if let svgTagRange = svg.range(of: "<svg"),
+           let svgStart = svg.range(of: ">", range: svgTagRange.upperBound..<svg.endIndex),
+           let svgEnd = svg.range(of: "</svg>", options: .backwards) {
+            innerContent = String(svg[svgStart.upperBound..<svgEnd.lowerBound])
+        }
+
+        // Escape special characters for XML attributes
+        let escapedLatex = equation.latex
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "'", with: "&apos;")
+
+        // Create metadata JSON
+        let metadata: [String: Any] = [
+            "generator": "mathedit-mac",
+            "generatorVersion": "0.1.0",
+            "generatedAt": ISO8601DateFormatter().string(from: Date()),
+            "equations": [[
+                "id": equation.id,
+                "latex": equation.latex,
+                "label": equation.label,
+                "displayMode": "block"
+            ]]
+        ]
+
+        let metadataJSON = (try? JSONSerialization.data(withJSONObject: metadata, options: [.prettyPrinted, .sortedKeys]))
+            .flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+
+        // Escape for XML content
+        let escapedMetadata = metadataJSON
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+
+        return """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="\(width)"
+             height="\(height)"
+             viewBox="\(viewBox)">
+          <metadata id="latex-equations" data-type="application/json">
+        \(escapedMetadata)
+          </metadata>
+          <g id="\(equation.id)-group"
+             data-role="latex-equation"
+             data-equation-id="\(equation.id)"
+             data-latex="\(escapedLatex)"
+             data-display-mode="block">
+        \(innerContent)
+          </g>
+        </svg>
+        """
     }
 
     private var highlightedEquationId: String? {

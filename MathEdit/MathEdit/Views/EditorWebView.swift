@@ -1,8 +1,19 @@
 import SwiftUI
 import WebKit
 
-/// Custom WKWebView that enables standard Edit menu items
+/// Custom WKWebView that enables standard Edit menu items and disables file drops
 class EditableWebView: WKWebView {
+    override init(frame: CGRect, configuration: WKWebViewConfiguration) {
+        super.init(frame: frame, configuration: configuration)
+        // Disable drag-and-drop to let parent view handle SVG imports
+        unregisterDraggedTypes()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        unregisterDraggedTypes()
+    }
+
     override func validateUserInterfaceItem(_ item: NSValidatedUserInterfaceItem) -> Bool {
         switch item.action {
         case #selector(NSText.copy(_:)),
