@@ -87,7 +87,7 @@ final class MathEditDocument: ReferenceFileDocument {
             renderedSVGs[eq.id] == nil || lastRenderedLatex[eq.id] != eq.latex
         }
         if !equationsToRender.isEmpty {
-            RenderService.shared.render(equations: equationsToRender, document: self)
+            RenderService.shared.render(equations: equationsToRender, frontmatter: frontmatter, document: self)
         }
     }
 

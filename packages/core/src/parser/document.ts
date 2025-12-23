@@ -1,5 +1,18 @@
 import { ParsedEquation, DocumentFrontmatter, ParsedDocument } from './types';
 
+/**
+ * Normalize color value for MathJax compatibility
+ * Converts rgba() to rgb() since MathJax doesn't support alpha channel
+ */
+function normalizeColor(color: string): string {
+  // Convert rgba(r, g, b, a) to rgb(r, g, b)
+  const rgbaMatch = color.match(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*[\d.]+\s*\)/i);
+  if (rgbaMatch) {
+    return `rgb(${rgbaMatch[1]}, ${rgbaMatch[2]}, ${rgbaMatch[3]})`;
+  }
+  return color;
+}
+
 function generateId(): string {
   // Fallback for environments without crypto.randomUUID (HTTP contexts)
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -21,6 +34,7 @@ function extractLabel(latex: string): string | null {
 
 /**
  * Resolve color value - if it starts with $, look it up in presets
+ * Also normalizes rgba to rgb for MathJax compatibility
  */
 function resolveColor(color: string | undefined, presets: Record<string, string> | undefined): string | undefined {
   if (!color) return undefined;
@@ -28,10 +42,11 @@ function resolveColor(color: string | undefined, presets: Record<string, string>
   // Check if it's a preset reference ($name)
   if (color.startsWith('$')) {
     const presetName = color.substring(1);
-    return presets?.[presetName] || color; // Fall back to original if not found
+    const resolved = presets?.[presetName] || color;
+    return normalizeColor(resolved);
   }
 
-  return color;
+  return normalizeColor(color);
 }
 
 /**
@@ -55,10 +70,10 @@ function replaceColorReferences(latex: string, presets: Record<string, string> |
       return match;
     }
 
-    // If it's a custom preset, replace with hex value
-    const hexValue = presets[colorName];
-    if (hexValue) {
-      return `\\color{${hexValue}}`;
+    // If it's a custom preset, replace with normalized color value
+    const colorValue = presets[colorName];
+    if (colorValue) {
+      return `\\color{${normalizeColor(colorValue)}}`;
     }
 
     // Otherwise leave unchanged

@@ -8,7 +8,9 @@ final class RenderService: NSObject {
 
     private var webView: WKWebView?
     private var isReady = false
-    private var pendingRenders: [(equations: [Equation], document: MathEditDocument)] = []
+    private var pendingRenders: [(equations: [Equation], frontmatter: DocumentFrontmatter, document: MathEditDocument)] = []
+    private var currentFrontmatter: DocumentFrontmatter?
+    private var currentEquations: [Equation] = []
 
     private override init() {
         super.init()
@@ -93,16 +95,21 @@ final class RenderService: NSObject {
         self.webView = webView
     }
 
-    func render(equations: [Equation], document: MathEditDocument) {
+    func render(equations: [Equation], frontmatter: DocumentFrontmatter = DocumentFrontmatter(), document: MathEditDocument) {
         if isReady {
-            doRender(equations: equations, document: document)
+            doRender(equations: equations, frontmatter: frontmatter, document: document)
         } else {
-            pendingRenders.append((equations, document))
+            pendingRenders.append((equations, frontmatter, document))
         }
     }
 
-    private func doRender(equations: [Equation], document: MathEditDocument) {
+    private func doRender(equations: [Equation], frontmatter: DocumentFrontmatter, document: MathEditDocument) {
         guard let webView = webView else { return }
+
+        // Store for use in callback
+        currentFrontmatter = frontmatter
+        currentEquations = equations
+        currentDocument = document
 
         let equationsJSON = equations.map { eq -> [String: Any] in
             // Strip \label{...} from LaTeX as MathJax doesn't understand it
@@ -130,9 +137,6 @@ final class RenderService: NSObject {
                 print("[RenderService] Error: \(error)")
             }
         }
-
-        // Store document reference for callback
-        currentDocument = document
     }
 
     private weak var currentDocument: MathEditDocument?
@@ -151,7 +155,7 @@ extension RenderService: WKScriptMessageHandler {
             isReady = true
             // Process pending renders
             for pending in pendingRenders {
-                doRender(equations: pending.equations, document: pending.document)
+                doRender(equations: pending.equations, frontmatter: pending.frontmatter, document: pending.document)
             }
             pendingRenders.removeAll()
 
@@ -161,13 +165,33 @@ extension RenderService: WKScriptMessageHandler {
                let success = body["success"] as? Bool,
                success,
                let svg = body["svg"] as? String {
+                // Apply color to SVG (same post-processing as web-standalone)
+                let coloredSVG = applyColor(to: svg, equationId: id)
                 DispatchQueue.main.async {
-                    self.currentDocument?.updateRenderedSVG(equationId: id, svg: svg)
+                    self.currentDocument?.updateRenderedSVG(equationId: id, svg: coloredSVG)
                 }
             }
 
         default:
             break
         }
+    }
+
+    /// Apply color to SVG by replacing black colors with the equation or global color
+    private func applyColor(to svg: String, equationId: String) -> String {
+        // Find the equation to get its per-equation color
+        let equation = currentEquations.first { $0.id == equationId }
+
+        // Use equation color, then frontmatter color, then default to nil (keep black)
+        guard let color = equation?.color ?? currentFrontmatter?.color else {
+            return svg
+        }
+
+        // Replace black colors with the specified color (same as generator.ts)
+        return svg
+            .replacingOccurrences(of: "stroke=\"black\"", with: "stroke=\"\(color)\"")
+            .replacingOccurrences(of: "fill=\"black\"", with: "fill=\"\(color)\"")
+            .replacingOccurrences(of: "stroke=\"currentColor\"", with: "stroke=\"\(color)\"")
+            .replacingOccurrences(of: "fill=\"currentColor\"", with: "fill=\"\(color)\"")
     }
 }

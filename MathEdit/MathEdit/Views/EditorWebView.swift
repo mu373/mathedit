@@ -180,7 +180,8 @@ struct EditorWebView: NSViewRepresentable {
                 if let body = message.body as? [String: Any],
                    let equationsData = body["equations"] as? [[String: Any]] {
                     let equations = equationsData.compactMap { parseEquation($0) }
-                    RenderService.shared.render(equations: equations, document: parent.document)
+                    let frontmatter = parseFrontmatter(body["frontmatter"] as? [String: Any])
+                    RenderService.shared.render(equations: equations, frontmatter: frontmatter, document: parent.document)
                 }
 
             default:
