@@ -28,7 +28,7 @@ export function downloadProject(data: ProjectData, sourceFileName?: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = sourceFileName || `mathedit-project-${Date.now()}.json`;
+  a.download = sourceFileName || `mathedit-project-${Date.now()}.mathedit`;
   a.click();
   URL.revokeObjectURL(url);
 }

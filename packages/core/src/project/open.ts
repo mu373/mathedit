@@ -16,7 +16,7 @@ export function openProjectFromInput(): Promise<File | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json';
+    input.accept = '.mathedit,.json';
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       resolve(file || null);

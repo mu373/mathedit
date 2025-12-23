@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 
 extension UTType {
     static var matheditDocument: UTType {
-        UTType(exportedAs: "com.mathedit.document", conformingTo: .json)
+        UTType("com.mathedit.document") ?? UTType(exportedAs: "com.mathedit.document", conformingTo: .json)
     }
 }
 
