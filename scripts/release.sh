@@ -54,19 +54,38 @@ echo "Build complete: ${BUILD_DIR}/${DMG_NAME}"
 # Step 5: Create GitHub release (optional)
 if command -v gh &> /dev/null && [ "${2}" = "--release" ]; then
     echo "Creating GitHub release..."
-    git tag -f "v${VERSION}"
+
+    # Create tag if it doesn't exist
+    if ! git rev-parse "v${VERSION}" >/dev/null 2>&1; then
+        git tag "v${VERSION}"
+    fi
     git push origin "v${VERSION}" --force
 
-    gh release create "v${VERSION}" "${BUILD_DIR}/${DMG_NAME}" \
-        --title "${APP_NAME} v${VERSION}" \
-        --notes "## Installation
+    # Get tag message if available
+    TAG_MESSAGE=$(git tag -l --format='%(contents)' "v${VERSION}" 2>/dev/null | head -20)
+
+    # Build release notes
+    RELEASE_NOTES="## Installation
 
 1. Download \`${DMG_NAME}\`
 2. Open the DMG and drag ${APP_NAME} to Applications
 3. **First launch:** Right-click the app → Open → Click \"Open\"
 
+> **Note:** The app is not notarized by Apple. When opened with double-click, macOS will show a security warning. Use right-click → Open to bypass this.
+
 ## Requirements
-- macOS 15.1 or later"
+- macOS 15.0 or later"
+
+    # Append tag message if available
+    if [ -n "${TAG_MESSAGE}" ]; then
+        RELEASE_NOTES="${TAG_MESSAGE}
+
+${RELEASE_NOTES}"
+    fi
+
+    gh release create "v${VERSION}" "${BUILD_DIR}/${DMG_NAME}" \
+        --title "v${VERSION} (macOS)" \
+        --notes "${RELEASE_NOTES}"
 
     echo "Release published!"
 fi
