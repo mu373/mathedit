@@ -100,12 +100,19 @@ final class MathEditDocument: ReferenceFileDocument {
         }
     }
 
-    /// Check if SVG contains duplicate equations
+    /// Check if SVG contains duplicate equations (by ID first, then by label)
     func checkSvgForDuplicates(_ svgContent: String) -> (hasDuplicates: Bool, duplicateLabels: [String]) {
         let result = parseSvg(svgContent)
         let existingIds = Set(equations.map { $0.id })
-        let duplicates = result.equations.filter { existingIds.contains($0.id) }
-        return (hasDuplicates: !duplicates.isEmpty, duplicateLabels: duplicates.map { $0.label })
+        let existingLabels = Set(equations.map { $0.label })
+
+        var duplicateLabels: [String] = []
+        for eq in result.equations {
+            if existingIds.contains(eq.id) || existingLabels.contains(eq.label) {
+                duplicateLabels.append(eq.label)
+            }
+        }
+        return (hasDuplicates: !duplicateLabels.isEmpty, duplicateLabels: duplicateLabels)
     }
 
     /// Import equations from SVG content
@@ -114,6 +121,7 @@ final class MathEditDocument: ReferenceFileDocument {
         guard !result.equations.isEmpty else { return }
 
         let existingIds = Set(equations.map { $0.id })
+        let existingLabels = Set(equations.map { $0.label })
         var newDoc = projectData.document
 
         for eq in result.equations {
@@ -121,9 +129,17 @@ final class MathEditDocument: ReferenceFileDocument {
             let hasLabel = eq.latex.contains("\\label{")
             let latexWithLabel = hasLabel ? eq.latex : "\(eq.latex)\n\\label{\(eq.label)}"
 
-            if existingIds.contains(eq.id) && overwrite {
-                // Find and replace existing equation
-                if let existingEq = equations.first(where: { $0.id == eq.id }) {
+            // Check for duplicate by ID first, then by label
+            let matchById = existingIds.contains(eq.id)
+            let matchByLabel = existingLabels.contains(eq.label)
+            let isDuplicate = matchById || matchByLabel
+
+            if isDuplicate && overwrite {
+                // Find existing equation to replace (by ID first, then by label)
+                let existingEq = equations.first(where: { $0.id == eq.id })
+                    ?? equations.first(where: { $0.label == eq.label })
+
+                if let existingEq = existingEq {
                     var lines = newDoc.components(separatedBy: "\n")
 
                     // Find separator before equation
@@ -155,7 +171,7 @@ final class MathEditDocument: ReferenceFileDocument {
                     lines = beforeLines + replacement + afterLines
                     newDoc = lines.joined(separator: "\n")
                 }
-            } else if !existingIds.contains(eq.id) {
+            } else if !isDuplicate {
                 // Append new equation
                 if !newDoc.hasSuffix("\n\n") {
                     if newDoc.hasSuffix("\n") {
