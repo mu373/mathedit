@@ -5,8 +5,7 @@ Convert LaTeX math equations to high-quality SVG images with embedded metadata f
 Available as a **web app** and **native macOS app**.  
 Web: https://mathedit.vercel.app/
 
-<img width="1329" height="795" alt="image" src="https://github.com/user-attachments/assets/1fb39ce4-29e6-4eff-9f46-521656bd9ea1" />
-
+<p align="center"><img width="100" height="100" alt="mathedit-iOS-Default-1024x1024@1x" src="https://github.com/user-attachments/assets/64a86261-accf-437b-b451-88387ef52b7a" /></p>
 
 ## Features
 
@@ -29,6 +28,12 @@ This tool is designed for creating professional mathematical visuals, particular
 - Create variations of equations with different highlights
 - Centralized management of all equation assets in one place
 - Easily update equations across multiple documents by re-exporting
+
+
+## Screenshots
+
+<img width="1329" height="795" alt="image" src="https://github.com/user-attachments/assets/1fb39ce4-29e6-4eff-9f46-521656bd9ea1" />
+
 
 ## Development
 
