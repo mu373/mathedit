@@ -7,6 +7,8 @@ private class ImageCache {
     private var svgHashes: [String: Int] = [:]
     private var lastZoom: CGFloat = 1.0
 
+    private static let baseScale: CGFloat = 1.5
+
     func image(for key: String, svg: String, zoom: CGFloat) -> NSImage? {
         // Invalidate cache if zoom changed
         if zoom != lastZoom {
@@ -62,6 +64,21 @@ private class ImageCache {
             )
         }
 
+        // Convert 'ex' units to 'pt' for proper NSImage handling
+        // MathJax uses 'ex' units which NSImage doesn't handle well
+        // 1ex ≈ 8pt for typical math fonts
+        let exToPt: Double = 8.0
+        if let pattern = try? NSRegularExpression(pattern: "([0-9.]+)ex", options: []) {
+            var result = svg
+            while let match = pattern.firstMatch(in: result, options: [], range: NSRange(result.startIndex..., in: result)) {
+                guard let fullRange = Range(match.range, in: result),
+                      let numRange = Range(match.range(at: 1), in: result),
+                      let value = Double(result[numRange]) else { break }
+                result = result.replacingCharacters(in: fullRange, with: String(format: "%.3fpt", value * exToPt))
+            }
+            svg = result
+        }
+
         let fullSVG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\(svg)"
         guard let data = fullSVG.data(using: .utf8) else { return nil }
 
@@ -72,30 +89,74 @@ private class ImageCache {
         do {
             try data.write(to: tempURL)
 
-            guard let image = NSImage(contentsOf: tempURL) else {
+            guard let svgImage = NSImage(contentsOf: tempURL) else {
                 try? FileManager.default.removeItem(at: tempURL)
                 return nil
             }
 
             // Force the image to load its data before deleting the file
-            _ = image.tiffRepresentation
+            _ = svgImage.tiffRepresentation
 
             try? FileManager.default.removeItem(at: tempURL)
 
             // Check if image is valid
-            guard image.isValid && image.size.width > 1 && image.size.height > 1 else {
+            let originalSize = svgImage.size
+            guard svgImage.isValid && originalSize.width > 1 && originalSize.height > 1 else {
                 return nil
             }
 
-            let baseScale: CGFloat = 12.0
-            let originalSize = image.size
-            let scaledSize = NSSize(
-                width: originalSize.width * baseScale * zoom,
-                height: originalSize.height * baseScale * zoom
+            // Calculate target size at the desired scale
+            let scale = baseScale * zoom
+            let targetSize = NSSize(
+                width: originalSize.width * scale,
+                height: originalSize.height * scale
             )
-            image.size = scaledSize
 
-            return image
+            // Account for retina displays
+            let screenScale = NSScreen.main?.backingScaleFactor ?? 2.0
+            let pixelWidth = Int(targetSize.width * screenScale)
+            let pixelHeight = Int(targetSize.height * screenScale)
+
+            // Create a bitmap at the proper resolution for retina displays
+            guard let bitmapRep = NSBitmapImageRep(
+                bitmapDataPlanes: nil,
+                pixelsWide: pixelWidth,
+                pixelsHigh: pixelHeight,
+                bitsPerSample: 8,
+                samplesPerPixel: 4,
+                hasAlpha: true,
+                isPlanar: false,
+                colorSpaceName: .deviceRGB,
+                bytesPerRow: 0,
+                bitsPerPixel: 0
+            ) else {
+                return nil
+            }
+
+            bitmapRep.size = targetSize // Set the display size (points, not pixels)
+
+            NSGraphicsContext.saveGraphicsState()
+            guard let context = NSGraphicsContext(bitmapImageRep: bitmapRep) else {
+                NSGraphicsContext.restoreGraphicsState()
+                return nil
+            }
+            NSGraphicsContext.current = context
+            context.imageInterpolation = .high
+
+            // Draw the SVG at the target size (this re-renders the vector at full resolution)
+            svgImage.draw(
+                in: NSRect(origin: .zero, size: targetSize),
+                from: NSRect(origin: .zero, size: originalSize),
+                operation: .copy,
+                fraction: 1.0
+            )
+
+            NSGraphicsContext.restoreGraphicsState()
+
+            let scaledImage = NSImage(size: targetSize)
+            scaledImage.addRepresentation(bitmapRep)
+
+            return scaledImage
         } catch {
             return nil
         }
