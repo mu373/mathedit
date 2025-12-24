@@ -8,8 +8,24 @@ SCHEME="MathEdit"
 PROJECT_DIR="MathEdit"
 BUILD_DIR="build"
 DMG_NAME="${APP_NAME}-${VERSION}.dmg"
+APPCAST_FILE="appcast.xml"
+
+# Sparkle tools
+SPARKLE_VERSION="2.6.4"
+SPARKLE_DIR="/tmp/sparkle-tools"
 
 echo "Building ${APP_NAME} v${VERSION}"
+
+# Step 0: Download Sparkle tools if needed
+if [ ! -d "${SPARKLE_DIR}/bin" ]; then
+    echo "Downloading Sparkle tools..."
+    mkdir -p "${SPARKLE_DIR}"
+    curl -L -o "/tmp/sparkle.tar.xz" \
+        "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
+    tar -xf "/tmp/sparkle.tar.xz" -C "${SPARKLE_DIR}"
+    rm -f "/tmp/sparkle.tar.xz"
+fi
+SPARKLE_BIN="${SPARKLE_DIR}/bin"
 
 # Step 1: Build web assets
 echo "Building web assets..."
@@ -51,7 +67,52 @@ rm -rf "${DMG_TEMP}"
 
 echo "Build complete: ${BUILD_DIR}/${DMG_NAME}"
 
-# Step 5: Create GitHub release (optional)
+# Step 5: Sign DMG with Sparkle EdDSA
+echo "Signing DMG with Sparkle EdDSA..."
+SIGN_OUTPUT=$("${SPARKLE_BIN}/sign_update" "${BUILD_DIR}/${DMG_NAME}" 2>&1)
+SIGNATURE=$(echo "${SIGN_OUTPUT}" | grep "sparkle:edSignature" | sed 's/.*sparkle:edSignature="\([^"]*\)".*/\1/')
+
+if [ -z "${SIGNATURE}" ]; then
+    echo "Warning: Could not extract EdDSA signature. Make sure you have generated keys."
+    echo "Run: ${SPARKLE_BIN}/generate_keys"
+    SIGNATURE="SIGNATURE_PLACEHOLDER"
+fi
+
+DMG_SIZE=$(stat -f%z "${BUILD_DIR}/${DMG_NAME}")
+DOWNLOAD_URL="https://github.com/mu373/mathedit/releases/download/mac-v${VERSION}/${DMG_NAME}"
+
+echo "EdDSA Signature: ${SIGNATURE}"
+echo "DMG Size: ${DMG_SIZE}"
+
+# Step 6: Generate appcast.xml
+echo "Generating appcast.xml..."
+cat > "${BUILD_DIR}/${APPCAST_FILE}" << EOF
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>MathEdit Updates</title>
+    <link>https://github.com/mu373/mathedit</link>
+    <description>Most recent updates for MathEdit.</description>
+    <language>en</language>
+    <item>
+      <title>Version ${VERSION}</title>
+      <pubDate>$(date -R)</pubDate>
+      <sparkle:version>${VERSION}</sparkle:version>
+      <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="${DOWNLOAD_URL}"
+        sparkle:edSignature="${SIGNATURE}"
+        length="${DMG_SIZE}"
+        type="application/octet-stream"/>
+    </item>
+  </channel>
+</rss>
+EOF
+
+echo "Appcast generated: ${BUILD_DIR}/${APPCAST_FILE}"
+
+# Step 7: Create GitHub release (optional)
 if command -v gh &> /dev/null && [ "${2}" = "--release" ]; then
     echo "Creating GitHub release..."
 
@@ -84,9 +145,11 @@ if command -v gh &> /dev/null && [ "${2}" = "--release" ]; then
 ${RELEASE_NOTES}"
     fi
 
-    gh release create "${TAG_NAME}" "${BUILD_DIR}/${DMG_NAME}" \
+    gh release create "${TAG_NAME}" \
+        "${BUILD_DIR}/${DMG_NAME}" \
+        "${BUILD_DIR}/${APPCAST_FILE}" \
         --title "v${VERSION} (macOS)" \
         --notes "${RELEASE_NOTES}"
 
-    echo "Release published!"
+    echo "Release published with DMG and appcast.xml!"
 fi

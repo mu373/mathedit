@@ -1,7 +1,10 @@
 import SwiftUI
+import Sparkle
 
 @main
 struct MathEditApp: App {
+    @StateObject private var updaterController = UpdaterController()
+
     init() {
         // Initialize RenderService early so MathJax starts loading
         _ = RenderService.shared
@@ -17,6 +20,13 @@ struct MathEditApp: App {
         .commands {
             // Adds View > Toggle Sidebar (⌥⌘S)
             SidebarCommands()
+
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates...") {
+                    updaterController.checkForUpdates()
+                }
+                .disabled(!updaterController.canCheckForUpdates)
+            }
 
             CommandGroup(after: .newItem) {
                 Button("Add Equation") {
@@ -119,7 +129,7 @@ struct MathEditApp: App {
 
         #if os(macOS)
         Settings {
-            SettingsView()
+            SettingsView(updaterController: updaterController)
         }
         #endif
     }
@@ -142,9 +152,11 @@ extension Notification.Name {
 
 // MARK: - Settings View
 struct SettingsView: View {
+    @ObservedObject var updaterController: UpdaterController
+
     var body: some View {
         TabView {
-            GeneralSettingsView()
+            GeneralSettingsView(updaterController: updaterController)
                 .tabItem {
                     Label("General", systemImage: "gear")
                 }
@@ -154,11 +166,12 @@ struct SettingsView: View {
                     Label("Editor", systemImage: "pencil")
                 }
         }
-        .frame(width: 450, height: 250)
+        .frame(width: 400, height: 200)
     }
 }
 
 struct GeneralSettingsView: View {
+    @ObservedObject var updaterController: UpdaterController
     @AppStorage("defaultDisplayMode") private var defaultDisplayMode = "block"
     @AppStorage("showEquationInSidebar") private var showEquationInSidebar = false
 
@@ -168,10 +181,13 @@ struct GeneralSettingsView: View {
                 Text("Block").tag("block")
                 Text("Inline").tag("inline")
             }
-
             Toggle("Show Equation in Sidebar", isOn: $showEquationInSidebar)
+            Toggle("Automatically Check for Updates", isOn: Binding(
+                get: { updaterController.automaticallyChecksForUpdates },
+                set: { updaterController.automaticallyChecksForUpdates = $0 }
+            ))
         }
-        .padding()
+        .formStyle(.grouped)
     }
 }
 
@@ -180,8 +196,15 @@ struct EditorSettingsView: View {
 
     var body: some View {
         Form {
-            Stepper("Font Size: \(fontSize)", value: $fontSize, in: 10...24)
+            LabeledContent("Font Size") {
+                HStack(spacing: 8) {
+                    Text("\(fontSize)pt")
+                        .monospacedDigit()
+                    Stepper("", value: $fontSize, in: 10...24)
+                        .labelsHidden()
+                }
+            }
         }
-        .padding()
+        .formStyle(.grouped)
     }
 }
