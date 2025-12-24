@@ -340,20 +340,23 @@ struct EquationRow: View {
                     Spacer()
                 }
 
-                // Centered SVG preview
-                HStack {
-                    Spacer()
-                    Group {
+                // Centered SVG preview - constrained to available width
+                GeometryReader { geometry in
+                    HStack {
+                        Spacer()
                         if let nsImage = cachedImage {
                             Image(nsImage: nsImage)
                         } else {
                             ProgressView()
                                 .scaleEffect(0.8)
                         }
+                        Spacer()
                     }
-                    .frame(minHeight: 50)
-                    Spacer()
+                    .frame(width: geometry.size.width)
                 }
+                .frame(height: cachedImage?.size.height ?? 50)
+                .frame(minHeight: 50)
+                .clipped()
 
                 // LaTeX source (without comments)
                 Text(latexPreview)
