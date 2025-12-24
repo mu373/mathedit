@@ -4,6 +4,7 @@ import Sparkle
 @main
 struct MathEditApp: App {
     @StateObject private var updaterController = UpdaterController()
+    @Environment(\.openWindow) private var openWindow
 
     init() {
         // Initialize RenderService early so MathJax starts loading
@@ -20,6 +21,12 @@ struct MathEditApp: App {
         .commands {
             // Adds View > Toggle Sidebar (⌥⌘S)
             SidebarCommands()
+
+            CommandGroup(replacing: .appInfo) {
+                Button("About MathEdit") {
+                    openWindow(id: "about")
+                }
+            }
 
             CommandGroup(after: .appInfo) {
                 Button("Check for Updates...") {
@@ -131,6 +138,17 @@ struct MathEditApp: App {
         Settings {
             SettingsView(updaterController: updaterController)
         }
+
+        Window("About MathEdit", id: "about") {
+            AboutView()
+        }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+
+        Window("Acknowledgements", id: "acknowledgements") {
+            AcknowledgementsView()
+        }
+        .windowResizability(.contentSize)
         #endif
     }
 }
