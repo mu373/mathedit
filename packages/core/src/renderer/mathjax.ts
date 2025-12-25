@@ -5,12 +5,8 @@ import { browserAdaptor } from 'mathjax-full/js/adaptors/browserAdaptor';
 import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html';
 import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages';
 
-// Import colorv2 to register it, then use it instead of standard color
-// colorv2 supports hex colors like #FF0000 directly in \color{}
-import 'mathjax-full/js/input/tex/colorv2/ColorV2Configuration';
-
-// Replace 'color' with 'colorv2' for hex color support
-const packages = AllPackages.map(pkg => pkg === 'color' ? 'colorv2' : pkg);
+// Use standard color package (colorv2 has bundling issues)
+const packages = AllPackages;
 
 export interface RendererOptions {
   displayMode?: boolean;

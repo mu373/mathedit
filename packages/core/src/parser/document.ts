@@ -1,26 +1,57 @@
 import { ParsedEquation, DocumentFrontmatter, ParsedDocument } from './types';
 
 /**
- * Normalize color value for SVG/MathJax compatibility
- * - Strips alpha from rgba() and 8-char hex (#RRGGBBAA)
- * Note: colorv2 extension handles hex (#FF0000), rgb(), and named colors directly
+ * Parse any color format to RGB values
  */
-function normalizeColor(color: string): string {
+function parseToRGB(color: string): { r: number; g: number; b: number } | null {
   const trimmed = color.trim();
 
-  // Convert #RRGGBBAA to #RRGGBB (strip alpha)
-  const hex8Match = trimmed.match(/^#([0-9A-Fa-f]{6})[0-9A-Fa-f]{2}$/);
-  if (hex8Match) {
-    return `#${hex8Match[1]}`;
+  // Parse #RRGGBB or #RRGGBBAA
+  const hexMatch = trimmed.match(/^#([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})?$/);
+  if (hexMatch) {
+    return {
+      r: parseInt(hexMatch[1], 16),
+      g: parseInt(hexMatch[2], 16),
+      b: parseInt(hexMatch[3], 16),
+    };
   }
 
-  // Convert rgba(r, g, b, a) to rgb(r, g, b)
-  const rgbaMatch = trimmed.match(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*[\d.]+\s*\)/i);
+  // Parse rgba(r, g, b, a) or rgb(r, g, b)
+  const rgbaMatch = trimmed.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
   if (rgbaMatch) {
-    return `rgb(${rgbaMatch[1]}, ${rgbaMatch[2]}, ${rgbaMatch[3]})`;
+    return {
+      r: parseInt(rgbaMatch[1]),
+      g: parseInt(rgbaMatch[2]),
+      b: parseInt(rgbaMatch[3]),
+    };
   }
 
-  return trimmed;
+  return null;
+}
+
+/**
+ * Convert color to hex format (for SVG fill/stroke attributes)
+ */
+function toHexColor(color: string): string {
+  const rgb = parseToRGB(color);
+  if (rgb) {
+    const toHex = (n: number) => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0');
+    return `#${toHex(rgb.r)}${toHex(rgb.g)}${toHex(rgb.b)}`;
+  }
+  return color.trim();
+}
+
+/**
+ * Convert color to LaTeX RGB model format: [RGB]{r,g,b}
+ * This works with MathJax's standard color package
+ */
+function toLatexRGB(color: string): string {
+  const rgb = parseToRGB(color);
+  if (rgb) {
+    return `[RGB]{${rgb.r},${rgb.g},${rgb.b}}`;
+  }
+  // Return empty for named colors (they work as-is)
+  return '';
 }
 
 function generateId(): string {
@@ -44,7 +75,7 @@ function extractLabel(latex: string): string | null {
 
 /**
  * Resolve color value - if it starts with $, look it up in presets
- * Also normalizes rgba to rgb for MathJax compatibility
+ * Returns hex format for SVG fill/stroke attributes
  */
 function resolveColor(color: string | undefined, presets: Record<string, string> | undefined): string | undefined {
   if (!color) return undefined;
@@ -53,15 +84,15 @@ function resolveColor(color: string | undefined, presets: Record<string, string>
   if (color.startsWith('$')) {
     const presetName = color.substring(1);
     const resolved = presets?.[presetName] || color;
-    return normalizeColor(resolved);
+    return toHexColor(resolved);
   }
 
-  return normalizeColor(color);
+  return toHexColor(color);
 }
 
 /**
- * Replace \color{name} with \color{value} for custom color presets
- * Also normalizes CSS colors (strips alpha from #RRGGBBAA and rgba)
+ * Replace \color{name} with \color[RGB]{r,g,b} for custom color presets
+ * Converts CSS colors to LaTeX RGB model format
  * Standard LaTeX colors are left unchanged
  */
 function replaceColorReferences(latex: string, presets: Record<string, string> | undefined): string {
@@ -72,7 +103,7 @@ function replaceColorReferences(latex: string, presets: Record<string, string> |
     'purple', 'teal', 'violet'
   ]);
 
-  // Replace \color{name} - normalize presets and CSS colors
+  // Replace \color{name} with \color[RGB]{r,g,b}
   return latex.replace(/\\color\{([^}]+)\}/g, (match, colorName) => {
     const trimmed = colorName.trim();
 
@@ -81,15 +112,17 @@ function replaceColorReferences(latex: string, presets: Record<string, string> |
       return match;
     }
 
-    // If it's a custom preset, replace with normalized color value
+    // If it's a custom preset, convert to LaTeX RGB format
     const colorValue = presets?.[trimmed];
     if (colorValue) {
-      return `\\color{${normalizeColor(colorValue)}}`;
+      const rgbModel = toLatexRGB(colorValue);
+      return rgbModel ? `\\color${rgbModel}` : match;
     }
 
-    // If it looks like a CSS color (starts with # or rgb), normalize it
+    // If it looks like a CSS color (starts with # or rgb), convert to LaTeX RGB
     if (trimmed.startsWith('#') || trimmed.startsWith('rgb')) {
-      return `\\color{${normalizeColor(trimmed)}}`;
+      const rgbModel = toLatexRGB(trimmed);
+      return rgbModel ? `\\color${rgbModel}` : match;
     }
 
     // Otherwise leave unchanged
