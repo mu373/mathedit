@@ -72,6 +72,16 @@ struct MathEditApp: App {
 
                 Divider()
 
+                Button("Paste SVG") {
+                    NotificationCenter.default.post(
+                        name: .pasteSVG,
+                        object: nil
+                    )
+                }
+                .keyboardShortcut("v", modifiers: [.command, .shift])
+
+                Divider()
+
                 Button("Delete Equation") {
                     NotificationCenter.default.post(
                         name: .deleteEquation,
@@ -164,6 +174,7 @@ extension Notification.Name {
     static let copyEquationSVG = Notification.Name("copyEquationSVG")
     static let copyEquationPNG = Notification.Name("copyEquationPNG")
     static let copyEquationLaTeX = Notification.Name("copyEquationLaTeX")
+    static let pasteSVG = Notification.Name("pasteSVG")
     static let documentImported = Notification.Name("documentImported")
     static let importSvgFromWeb = Notification.Name("importSvgFromWeb")
 }

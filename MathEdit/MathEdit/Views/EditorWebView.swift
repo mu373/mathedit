@@ -122,6 +122,10 @@ struct EditorWebView: NSViewRepresentable {
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
+                // Preserve current cursor position when syncing imported document
+                if let cursorLine = self?.parent.cursorLine {
+                    self?.pendingCursorLine = cursorLine
+                }
                 self?.forceSyncDocumentToWeb()
             }
 
