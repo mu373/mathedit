@@ -99,48 +99,120 @@ struct EquationContextMenu: View {
             .replacingOccurrences(of: "\\", with: "_")
     }
 
-    /// Create SVG data with proper XML header, scaled 2x for export
+    /// Create SVG data with metadata for round-trip import/export
     private func createSVGData() -> Data? {
         guard let svg = equation.renderedSVG else { return nil }
-        let scaledSVG = Self.scaleSVG(svg, scale: 2.0)
-        return scaledSVG.data(using: .utf8)
+        let fullSVG = wrapSVGWithMetadata(svg: svg)
+        return fullSVG.data(using: .utf8)
     }
 
-    /// Scale SVG dimensions by a factor
-    private static func scaleSVG(_ svg: String, scale: Double) -> String {
-        var svgString = svg
+    /// Wrap raw MathJax SVG with metadata for round-trip import/export (scaled 2x)
+    private func wrapSVGWithMetadata(svg: String) -> String {
+        let scale = 2.0
 
-        // Add xmlns if missing
-        if !svgString.contains("xmlns=") {
-            svgString = svgString.replacingOccurrences(
-                of: "<svg",
-                with: "<svg xmlns=\"http://www.w3.org/2000/svg\""
-            )
+        // Extract dimensions from the SVG
+        var width = "100"
+        var height = "50"
+        var viewBox = "0 0 100 50"
+
+        if let widthPattern = try? NSRegularExpression(pattern: #"width="([^"]+)""#, options: []),
+           let match = widthPattern.firstMatch(in: svg, options: [], range: NSRange(svg.startIndex..., in: svg)),
+           let fullRange = Range(match.range, in: svg),
+           let start = String(svg[fullRange]).range(of: "=\""),
+           let end = String(svg[fullRange]).lastIndex(of: "\"") {
+            let fullMatch = String(svg[fullRange])
+            width = String(fullMatch[start.upperBound..<end])
+        }
+        if let heightPattern = try? NSRegularExpression(pattern: #"height="([^"]+)""#, options: []),
+           let match = heightPattern.firstMatch(in: svg, options: [], range: NSRange(svg.startIndex..., in: svg)),
+           let fullRange = Range(match.range, in: svg),
+           let start = String(svg[fullRange]).range(of: "=\""),
+           let end = String(svg[fullRange]).lastIndex(of: "\"") {
+            let fullMatch = String(svg[fullRange])
+            height = String(fullMatch[start.upperBound..<end])
+        }
+        if let viewBoxPattern = try? NSRegularExpression(pattern: #"viewBox="([^"]+)""#, options: []),
+           let match = viewBoxPattern.firstMatch(in: svg, options: [], range: NSRange(svg.startIndex..., in: svg)),
+           let fullRange = Range(match.range, in: svg),
+           let start = String(svg[fullRange]).range(of: "=\""),
+           let end = String(svg[fullRange]).lastIndex(of: "\"") {
+            let fullMatch = String(svg[fullRange])
+            viewBox = String(fullMatch[start.upperBound..<end])
         }
 
-        // Scale width attribute
-        if let widthPattern = try? NSRegularExpression(pattern: #"width="([0-9.]+)(ex|pt|px|em)?""#, options: []),
-           let match = widthPattern.firstMatch(in: svgString, options: [], range: NSRange(svgString.startIndex..., in: svgString)),
-           let fullRange = Range(match.range, in: svgString),
-           let numRange = Range(match.range(at: 1), in: svgString),
-           let value = Double(svgString[numRange]) {
-            let unit = match.range(at: 2).location != NSNotFound ? String(svgString[Range(match.range(at: 2), in: svgString)!]) : ""
-            let newValue = value * scale
-            svgString = svgString.replacingCharacters(in: fullRange, with: "width=\"\(String(format: "%.3f", newValue))\(unit)\"")
+        // Scale width and height by 2x
+        let scaledWidth = scaleDimension(width, scale: scale)
+        let scaledHeight = scaleDimension(height, scale: scale)
+
+        // Extract inner content from MathJax SVG
+        var innerContent = svg
+        if let svgTagRange = svg.range(of: "<svg"),
+           let svgStart = svg.range(of: ">", range: svgTagRange.upperBound..<svg.endIndex),
+           let svgEnd = svg.range(of: "</svg>", options: .backwards) {
+            innerContent = String(svg[svgStart.upperBound..<svgEnd.lowerBound])
         }
 
-        // Scale height attribute
-        if let heightPattern = try? NSRegularExpression(pattern: #"height="([0-9.]+)(ex|pt|px|em)?""#, options: []),
-           let match = heightPattern.firstMatch(in: svgString, options: [], range: NSRange(svgString.startIndex..., in: svgString)),
-           let fullRange = Range(match.range, in: svgString),
-           let numRange = Range(match.range(at: 1), in: svgString),
-           let value = Double(svgString[numRange]) {
-            let unit = match.range(at: 2).location != NSNotFound ? String(svgString[Range(match.range(at: 2), in: svgString)!]) : ""
-            let newValue = value * scale
-            svgString = svgString.replacingCharacters(in: fullRange, with: "height=\"\(String(format: "%.3f", newValue))\(unit)\"")
-        }
+        // Escape special characters for XML attributes
+        let escapedLatex = equation.latex
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "'", with: "&apos;")
 
-        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\(svgString)"
+        // Create metadata JSON
+        let metadata: [String: Any] = [
+            "generator": "mathedit-mac",
+            "generatorVersion": "0.1.0",
+            "generatedAt": ISO8601DateFormatter().string(from: Date()),
+            "equations": [[
+                "id": equation.id,
+                "latex": equation.latex,
+                "label": equation.label,
+                "displayMode": "block"
+            ]]
+        ]
+
+        let metadataJSON = (try? JSONSerialization.data(withJSONObject: metadata, options: [.prettyPrinted, .sortedKeys]))
+            .flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+
+        // Escape for XML content
+        let escapedMetadata = metadataJSON
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+
+        return """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="\(scaledWidth)"
+             height="\(scaledHeight)"
+             viewBox="\(viewBox)">
+          <metadata id="latex-equations" data-type="application/json">
+        \(escapedMetadata)
+          </metadata>
+          <g id="\(equation.id)-group"
+             data-role="latex-equation"
+             data-equation-id="\(equation.id)"
+             data-latex="\(escapedLatex)"
+             data-display-mode="block">
+        \(innerContent)
+          </g>
+        </svg>
+        """
+    }
+
+    /// Scale a dimension string (e.g., "10.5ex") by a factor
+    private func scaleDimension(_ dimension: String, scale: Double) -> String {
+        let pattern = #"^([0-9.]+)(ex|pt|px|em)?$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []),
+              let match = regex.firstMatch(in: dimension, options: [], range: NSRange(dimension.startIndex..., in: dimension)),
+              let numRange = Range(match.range(at: 1), in: dimension),
+              let value = Double(dimension[numRange]) else {
+            return dimension
+        }
+        let unit = match.range(at: 2).location != NSNotFound ? String(dimension[Range(match.range(at: 2), in: dimension)!]) : ""
+        return String(format: "%.3f", value * scale) + unit
     }
 
     /// Create PNG image from SVG
