@@ -1,16 +1,26 @@
 import { ParsedEquation, DocumentFrontmatter, ParsedDocument } from './types';
 
 /**
- * Normalize color value for MathJax compatibility
- * Converts rgba() to rgb() since MathJax doesn't support alpha channel
+ * Normalize color value for SVG/MathJax compatibility
+ * - Strips alpha from rgba() and 8-char hex (#RRGGBBAA)
+ * Note: colorv2 extension handles hex (#FF0000), rgb(), and named colors directly
  */
 function normalizeColor(color: string): string {
+  const trimmed = color.trim();
+
+  // Convert #RRGGBBAA to #RRGGBB (strip alpha)
+  const hex8Match = trimmed.match(/^#([0-9A-Fa-f]{6})[0-9A-Fa-f]{2}$/);
+  if (hex8Match) {
+    return `#${hex8Match[1]}`;
+  }
+
   // Convert rgba(r, g, b, a) to rgb(r, g, b)
-  const rgbaMatch = color.match(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*[\d.]+\s*\)/i);
+  const rgbaMatch = trimmed.match(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*[\d.]+\s*\)/i);
   if (rgbaMatch) {
     return `rgb(${rgbaMatch[1]}, ${rgbaMatch[2]}, ${rgbaMatch[3]})`;
   }
-  return color;
+
+  return trimmed;
 }
 
 function generateId(): string {
@@ -50,12 +60,11 @@ function resolveColor(color: string | undefined, presets: Record<string, string>
 }
 
 /**
- * Replace \color{name} with \color{hexvalue} for custom color presets
+ * Replace \color{name} with \color{value} for custom color presets
+ * Also normalizes CSS colors (strips alpha from #RRGGBBAA and rgba)
  * Standard LaTeX colors are left unchanged
  */
 function replaceColorReferences(latex: string, presets: Record<string, string> | undefined): string {
-  if (!presets || Object.keys(presets).length === 0) return latex;
-
   // Standard LaTeX/xcolor color names (leave these unchanged)
   const standardColors = new Set([
     'black', 'white', 'red', 'green', 'blue', 'cyan', 'magenta', 'yellow',
@@ -63,17 +72,24 @@ function replaceColorReferences(latex: string, presets: Record<string, string> |
     'purple', 'teal', 'violet'
   ]);
 
-  // Replace \color{name} where name is a custom preset
-  return latex.replace(/\\color\{([\w#-]+)\}/g, (match, colorName) => {
+  // Replace \color{name} - normalize presets and CSS colors
+  return latex.replace(/\\color\{([^}]+)\}/g, (match, colorName) => {
+    const trimmed = colorName.trim();
+
     // If it's a standard color, leave it as is
-    if (standardColors.has(colorName.toLowerCase())) {
+    if (standardColors.has(trimmed.toLowerCase())) {
       return match;
     }
 
     // If it's a custom preset, replace with normalized color value
-    const colorValue = presets[colorName];
+    const colorValue = presets?.[trimmed];
     if (colorValue) {
       return `\\color{${normalizeColor(colorValue)}}`;
+    }
+
+    // If it looks like a CSS color (starts with # or rgb), normalize it
+    if (trimmed.startsWith('#') || trimmed.startsWith('rgb')) {
+      return `\\color{${normalizeColor(trimmed)}}`;
     }
 
     // Otherwise leave unchanged
