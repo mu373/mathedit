@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@hono/swagger-ui": "^0.5.2",
-    "@hono/zod-openapi": "^1.1.5",
+    "@hono/zod-openapi": "^1.2.2",
     "@hono/zod-validator": "^0.7.5",
     "hono": "^4.11.7",
     "mathjax-full": "^3.2.2",

@@ -14,8 +14,8 @@ importers:
         specifier: ^0.5.2
         version: 0.5.2(hono@4.11.7)
       '@hono/zod-openapi':
-        specifier: ^1.1.5
-        version: 1.2.0(hono@4.11.7)(zod@4.2.1)
+        specifier: ^1.2.2
+        version: 1.2.2(hono@4.11.7)(zod@4.2.1)
       '@hono/zod-validator':
         specifier: ^0.7.5
         version: 0.7.6(hono@4.11.7)(zod@4.2.1)
@@ -225,8 +225,8 @@ packages:
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
 
-  '@asteasolutions/zod-to-openapi@8.2.0':
-    resolution: {integrity: sha512-u05zNUirlukJAf9oEHmxSF31L1XQhz9XdpVILt7+xhrz65oQqBpiOWFkGvRWL0IpjOUJ878idKoNmYPxrFnkeg==}
+  '@asteasolutions/zod-to-openapi@8.4.1':
+    resolution: {integrity: sha512-WmJUsFINbnWxGvHSd16aOjgKf+5GsfdxruO2YDLcgplsidakCauik1lhlk83YDH06265Yd1XtUyF24o09uygpw==}
     peerDependencies:
       zod: ^4.0.0
 
@@ -758,8 +758,8 @@ packages:
     peerDependencies:
       hono: '*'
 
-  '@hono/zod-openapi@1.2.0':
-    resolution: {integrity: sha512-KDfHqv/Wy4elVseZXgokbHxeWuqBL+AZfqsOMpEihBMUsk/fJ+bLIi3Sf70JFVpt1Ihui8RasYrInozt7ZBDIA==}
+  '@hono/zod-openapi@1.2.2':
+    resolution: {integrity: sha512-va6vsL23wCJ1d0Vd+vGL1XOt+wPwItxirYafuhlW9iC2MstYr2FvsI7mctb45eBTjZfkqB/3LYDJEppPjOEiHw==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       hono: '>=4.3.6'
@@ -2688,7 +2688,7 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
-  '@asteasolutions/zod-to-openapi@8.2.0(zod@4.2.1)':
+  '@asteasolutions/zod-to-openapi@8.4.1(zod@4.2.1)':
     dependencies:
       openapi3-ts: 4.5.0
       zod: 4.2.1
@@ -3089,9 +3089,9 @@ snapshots:
     dependencies:
       hono: 4.11.7
 
-  '@hono/zod-openapi@1.2.0(hono@4.11.7)(zod@4.2.1)':
+  '@hono/zod-openapi@1.2.2(hono@4.11.7)(zod@4.2.1)':
     dependencies:
-      '@asteasolutions/zod-to-openapi': 8.2.0(zod@4.2.1)
+      '@asteasolutions/zod-to-openapi': 8.4.1(zod@4.2.1)
       '@hono/zod-validator': 0.7.6(hono@4.11.7)(zod@4.2.1)
       hono: 4.11.7
       openapi3-ts: 4.5.0
