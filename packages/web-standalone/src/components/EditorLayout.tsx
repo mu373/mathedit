@@ -253,9 +253,9 @@ export function EditorLayout() {
           {/* Left Sidebar - Equation List */}
           <Panel
             id={EDITOR_LAYOUT_PANEL_IDS.sidebar}
-            defaultSize={15}
-            minSize={10}
-            maxSize={25}
+            defaultSize="15%"
+            minSize="10%"
+            maxSize="25%"
           >
             <EquationList
               equations={parsedEquations}
@@ -270,8 +270,8 @@ export function EditorLayout() {
           {/* Center - LaTeX Editor */}
           <Panel
             id={EDITOR_LAYOUT_PANEL_IDS.editor}
-            defaultSize={45}
-            minSize={30}
+            defaultSize="45%"
+            minSize="30%"
           >
             <LatexDocument
               key={activeTabId}
@@ -286,8 +286,8 @@ export function EditorLayout() {
           {/* Right - Preview Pane */}
           <Panel
             id={EDITOR_LAYOUT_PANEL_IDS.preview}
-            defaultSize={40}
-            minSize={30}
+            defaultSize="40%"
+            minSize="30%"
           >
             <PreviewPane
               equations={parsedEquations}
