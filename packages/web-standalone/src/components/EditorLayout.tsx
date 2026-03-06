@@ -235,7 +235,7 @@ export function EditorLayout() {
       <div className="flex-1 overflow-hidden">
         <Group orientation="horizontal">
           {/* Left Sidebar - Equation List */}
-          <Panel defaultSize={15} minSize={10} maxSize={25}>
+          <Panel defaultSize="15%" minSize="10%" maxSize="25%">
             <EquationList
               equations={parsedEquations}
               activeId={activeEquationId}
@@ -247,7 +247,7 @@ export function EditorLayout() {
           <Separator className="w-1 bg-border hover:bg-primary/50 transition-colors" />
 
           {/* Center - LaTeX Editor */}
-          <Panel defaultSize={45} minSize={30}>
+          <Panel defaultSize="45%" minSize="30%">
             <LatexDocument
               key={activeTabId}
               document={latexDocument}
@@ -259,7 +259,7 @@ export function EditorLayout() {
           <Separator className="w-1 bg-border hover:bg-primary/50 transition-colors" />
 
           {/* Right - Preview Pane */}
-          <Panel defaultSize={40} minSize={30}>
+          <Panel defaultSize="40%" minSize="30%">
             <PreviewPane
               equations={parsedEquations}
               renderedSvgs={renderedSvgs}
