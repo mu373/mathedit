@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, DragEvent, useEffect } from 'react';
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { Group, Panel, Separator } from 'react-resizable-panels';
 import { Toolbar } from './Toolbar';
 import { EquationList } from './EquationList';
 import { LatexDocument } from './LatexDocument';
@@ -233,7 +233,7 @@ export function EditorLayout() {
     >
       <Toolbar onImportSvgFromClipboard={handleImportSvgFromClipboard} />
       <div className="flex-1 overflow-hidden">
-        <PanelGroup direction="horizontal">
+        <Group orientation="horizontal">
           {/* Left Sidebar - Equation List */}
           <Panel defaultSize={15} minSize={10} maxSize={25}>
             <EquationList
@@ -244,7 +244,7 @@ export function EditorLayout() {
             />
           </Panel>
 
-          <PanelResizeHandle className="w-1 bg-border hover:bg-primary/50 transition-colors" />
+          <Separator className="w-1 bg-border hover:bg-primary/50 transition-colors" />
 
           {/* Center - LaTeX Editor */}
           <Panel defaultSize={45} minSize={30}>
@@ -256,7 +256,7 @@ export function EditorLayout() {
             />
           </Panel>
 
-          <PanelResizeHandle className="w-1 bg-border hover:bg-primary/50 transition-colors" />
+          <Separator className="w-1 bg-border hover:bg-primary/50 transition-colors" />
 
           {/* Right - Preview Pane */}
           <Panel defaultSize={40} minSize={30}>
@@ -267,7 +267,7 @@ export function EditorLayout() {
               onSelectEquation={setActiveEquation}
             />
           </Panel>
-        </PanelGroup>
+        </Group>
       </div>
 
       {/* Drag overlay */}
