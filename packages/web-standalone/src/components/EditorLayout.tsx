@@ -16,6 +16,18 @@ import {
 import { Button } from './ui/button';
 import { parseSvg, generateSVG, type EquationInput } from '@mathedit/core';
 
+const EDITOR_LAYOUT_PANEL_IDS = {
+  sidebar: 'editor-layout-sidebar',
+  editor: 'editor-layout-editor',
+  preview: 'editor-layout-preview',
+} as const;
+
+const EDITOR_LAYOUT_DEFAULTS = {
+  [EDITOR_LAYOUT_PANEL_IDS.sidebar]: 15,
+  [EDITOR_LAYOUT_PANEL_IDS.editor]: 45,
+  [EDITOR_LAYOUT_PANEL_IDS.preview]: 40,
+} as const;
+
 export function EditorLayout() {
   const {
     setDocument,
@@ -232,10 +244,19 @@ export function EditorLayout() {
       onDrop={handleDrop}
     >
       <Toolbar onImportSvgFromClipboard={handleImportSvgFromClipboard} />
-      <div className="flex-1 overflow-hidden">
-        <Group orientation="horizontal">
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <Group
+          className="h-full w-full"
+          defaultLayout={EDITOR_LAYOUT_DEFAULTS}
+          orientation="horizontal"
+        >
           {/* Left Sidebar - Equation List */}
-          <Panel defaultSize="15%" minSize="10%" maxSize="25%">
+          <Panel
+            id={EDITOR_LAYOUT_PANEL_IDS.sidebar}
+            defaultSize={15}
+            minSize={10}
+            maxSize={25}
+          >
             <EquationList
               equations={parsedEquations}
               activeId={activeEquationId}
@@ -247,7 +268,11 @@ export function EditorLayout() {
           <Separator className="w-1 bg-border hover:bg-primary/50 transition-colors" />
 
           {/* Center - LaTeX Editor */}
-          <Panel defaultSize="45%" minSize="30%">
+          <Panel
+            id={EDITOR_LAYOUT_PANEL_IDS.editor}
+            defaultSize={45}
+            minSize={30}
+          >
             <LatexDocument
               key={activeTabId}
               document={latexDocument}
@@ -259,7 +284,11 @@ export function EditorLayout() {
           <Separator className="w-1 bg-border hover:bg-primary/50 transition-colors" />
 
           {/* Right - Preview Pane */}
-          <Panel defaultSize="40%" minSize="30%">
+          <Panel
+            id={EDITOR_LAYOUT_PANEL_IDS.preview}
+            defaultSize={40}
+            minSize={30}
+          >
             <PreviewPane
               equations={parsedEquations}
               renderedSvgs={renderedSvgs}
