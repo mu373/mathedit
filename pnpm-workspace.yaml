@@ -1,2 +1,6 @@
 packages:
   - 'packages/*'
+
+# Prevent installation of recently published packages (requires pnpm >=10.16)
+# 4320 minutes = 3 days
+minimumReleaseAge: 4320
