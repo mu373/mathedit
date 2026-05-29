@@ -246,8 +246,8 @@ struct ContentView: View {
             )
             .navigationSplitViewColumnWidth(min: 250, ideal: 350)
         }
-        .toolbar(id: "main") {
-            ToolbarItem(id: "add", placement: .automatic) {
+        .toolbar {
+            ToolbarItem(placement: .automatic) {
                 Button {
                     NotificationCenter.default.post(name: .addEquation, object: nil)
                 } label: {
@@ -256,7 +256,7 @@ struct ContentView: View {
                 .help("Add Equation (⌘;)")
             }
 
-            ToolbarItem(id: "delete", placement: .automatic) {
+            ToolbarItem(placement: .automatic) {
                 Button {
                     deleteSelectedEquation()
                 } label: {
@@ -266,7 +266,7 @@ struct ContentView: View {
                 .help("Delete Equation (⇧⌘⌫)")
             }
 
-            ToolbarItem(id: "export", placement: .automatic) {
+            ToolbarItem(placement: .automatic) {
                 Menu {
                     Button("Copy SVG") {
                         copySelectedSVGToClipboard()
