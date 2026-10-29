@@ -23,6 +23,24 @@ final class MathEditUITests: XCTestCase {
     }
 
     @MainActor
+    func testNewDocumentShortcut() throws {
+        let app = XCUIApplication()
+        // Keep document windows separate so creation can be counted regardless
+        // of the user's system tabbing preference.
+        app.launchArguments = ["-AppleWindowTabbingMode", "manual"]
+        app.launch()
+
+        for _ in 0..<3 {
+            let windowCount = app.windows.count
+            app.typeKey("n", modifierFlags: .command)
+            let newWindow = NSPredicate { _, _ in app.windows.count > windowCount }
+            expectation(for: newWindow, evaluatedWith: app)
+            waitForExpectations(timeout: 10)
+            XCTAssertNotEqual(app.state, .notRunning)
+        }
+    }
+
+    @MainActor
     func testExample() throws {
         // UI tests must launch the application that they test.
         let app = XCUIApplication()

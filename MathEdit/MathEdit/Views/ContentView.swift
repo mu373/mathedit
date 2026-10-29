@@ -246,6 +246,8 @@ struct ContentView: View {
             )
             .navigationSplitViewColumnWidth(min: 250, ideal: 350)
         }
+        // A shared customizable toolbar ID makes AppKit synchronize items across
+        // document windows and can crash when a second document is opened.
         .toolbar {
             ToolbarItem(placement: .automatic) {
                 Button {
