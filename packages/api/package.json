@@ -15,25 +15,25 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@hono/swagger-ui": "^0.5.2",
-    "@hono/zod-openapi": "^1.1.5",
+    "@hono/swagger-ui": "^0.6.0",
+    "@hono/zod-openapi": "^1.2.2",
     "@hono/zod-validator": "^0.7.5",
-    "hono": "^4.10.8",
+    "hono": "^4.12.7",
     "mathjax-full": "^3.2.2",
     "uuid": "^13.0.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20251212.0",
+    "@cloudflare/workers-types": "^4.20260206.0",
     "@types/node": "^25.0.1",
     "@types/uuid": "^11.0.0",
     "@typescript-eslint/eslint-plugin": "^8.50.0",
     "@typescript-eslint/parser": "^8.49.0",
     "eslint": "^9.39.1",
-    "prettier": "^3.7.4",
+    "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.15",
-    "wrangler": "^4.56.0"
+    "wrangler": "^4.59.1"
   },
   "engines": {
     "node": ">=18.0.0"
