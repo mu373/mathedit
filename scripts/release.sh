@@ -11,8 +11,8 @@ DMG_NAME="${APP_NAME}-${VERSION}.dmg"
 APPCAST_FILE="appcast.xml"
 
 # Sparkle tools
-SPARKLE_VERSION="2.6.4"
-SPARKLE_DIR="/tmp/sparkle-tools"
+SPARKLE_VERSION="2.10.1"
+SPARKLE_DIR="/tmp/sparkle-tools-${SPARKLE_VERSION}"
 
 echo "Building ${APP_NAME} v${VERSION}"
 
@@ -20,7 +20,7 @@ echo "Building ${APP_NAME} v${VERSION}"
 if [ ! -d "${SPARKLE_DIR}/bin" ]; then
     echo "Downloading Sparkle tools..."
     mkdir -p "${SPARKLE_DIR}"
-    curl -L -o "/tmp/sparkle.tar.xz" \
+    curl -fL -o "/tmp/sparkle.tar.xz" \
         "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
     tar -xf "/tmp/sparkle.tar.xz" -C "${SPARKLE_DIR}"
     rm -f "/tmp/sparkle.tar.xz"
@@ -29,7 +29,7 @@ SPARKLE_BIN="${SPARKLE_DIR}/bin"
 
 # Step 1: Build web assets
 echo "Building web assets..."
-pnpm install
+pnpm install --frozen-lockfile
 pnpm build:native
 
 # Step 2: Build macOS app
@@ -73,9 +73,9 @@ SIGN_OUTPUT=$("${SPARKLE_BIN}/sign_update" "${BUILD_DIR}/${DMG_NAME}" 2>&1)
 SIGNATURE=$(echo "${SIGN_OUTPUT}" | grep "sparkle:edSignature" | sed 's/.*sparkle:edSignature="\([^"]*\)".*/\1/')
 
 if [ -z "${SIGNATURE}" ]; then
-    echo "Warning: Could not extract EdDSA signature. Make sure you have generated keys."
+    echo "Error: Could not extract EdDSA signature. Make sure you have generated keys."
     echo "Run: ${SPARKLE_BIN}/generate_keys"
-    SIGNATURE="SIGNATURE_PLACEHOLDER"
+    exit 1
 fi
 
 DMG_SIZE=$(stat -f%z "${BUILD_DIR}/${DMG_NAME}")
@@ -99,7 +99,7 @@ cat > "${BUILD_DIR}/${APPCAST_FILE}" << EOF
       <pubDate>$(date -R)</pubDate>
       <sparkle:version>${VERSION}</sparkle:version>
       <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <sparkle:minimumSystemVersion>15.1</sparkle:minimumSystemVersion>
       <enclosure
         url="${DOWNLOAD_URL}"
         sparkle:edSignature="${SIGNATURE}"
@@ -121,7 +121,7 @@ if command -v gh &> /dev/null && [ "${2}" = "--release" ]; then
     if ! git rev-parse "${TAG_NAME}" >/dev/null 2>&1; then
         git tag "${TAG_NAME}"
     fi
-    git push origin "${TAG_NAME}" --force
+    git push origin "${TAG_NAME}"
 
     # Get tag message if available (strip PGP signature if present)
     TAG_MESSAGE=$(git tag -l --format='%(contents)' "${TAG_NAME}" 2>/dev/null | sed '/-----BEGIN PGP SIGNATURE-----/,$d' | head -20)
@@ -136,7 +136,7 @@ if command -v gh &> /dev/null && [ "${2}" = "--release" ]; then
 > **Note:** The app is not notarized by Apple. When opened with double-click, macOS will show a security warning. Use right-click → Open to bypass this.
 
 ## Requirements
-- macOS 15.0 or later"
+- macOS 15.1 or later"
 
     # Append tag message if available
     if [ -n "${TAG_MESSAGE}" ]; then

@@ -1,3 +1,4 @@
+import '../utils/monaco';
 import Editor from '@monaco-editor/react';
 import type { OnMount } from '@monaco-editor/react';
 

@@ -8,3 +8,7 @@ allowBuilds:
 # Prevent installation of recently published packages (requires pnpm >=10.16)
 # 4320 minutes = 3 days
 minimumReleaseAge: 4320
+
+# Monaco pins an older DOMPurify; keep the audited sanitizer patched.
+overrides:
+  dompurify: 3.4.17

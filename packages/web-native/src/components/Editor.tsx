@@ -1,3 +1,4 @@
+import '../utils/monaco';
 import MonacoEditor from '@monaco-editor/react';
 import type { OnMount } from '@monaco-editor/react';
 import { useRef, useEffect, useState } from 'react';
