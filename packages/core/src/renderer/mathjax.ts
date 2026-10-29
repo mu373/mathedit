@@ -4,6 +4,7 @@ import { SVG } from 'mathjax-full/js/output/svg';
 import { browserAdaptor } from 'mathjax-full/js/adaptors/browserAdaptor';
 import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html';
 import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages';
+import { SVGmtable } from 'mathjax-full/js/output/svg/Wrappers/mtable';
 
 // Use standard color package (colorv2 has bundling issues)
 const packages = AllPackages;
@@ -40,7 +41,9 @@ export class MathJaxRenderer {
     const throwOnError = options.throwOnError ?? false;
 
     try {
-      const doc = mathjax.document('', {
+      // Unknown glyphs (including Japanese) need browser font measurements.
+      // A parsed, detached document has no layout and measures them as zero width.
+      const doc = mathjax.document(document, {
         InputJax: this.tex,
         OutputJax: this.svg,
       });
@@ -51,6 +54,20 @@ export class MathJaxRenderer {
         ex: 8,
         containerWidth: 80 * 16,
       });
+
+      // convert() does not include MathJax's page stylesheet. Inline its table
+      // rules so internal lines, frames and dashed rules survive standalone SVG
+      // export as well as rendering in a page without MathJax's stylesheet.
+      for (const [selector, styles] of Object.entries(SVGmtable.styles)) {
+        for (const element of node.querySelectorAll(selector)) {
+          for (const [property, value] of Object.entries(styles)) {
+            if (!this.adaptor.getStyle(element, property) &&
+                !this.adaptor.getAttribute(element, property)) {
+              this.adaptor.setStyle(element, property, String(value));
+            }
+          }
+        }
+      }
 
       let svgString = this.adaptor.outerHTML(node);
 
@@ -73,7 +90,7 @@ export class MathJaxRenderer {
 
   validate(latex: string): { valid: boolean; errors: string[] } {
     try {
-      const doc = mathjax.document('', {
+      const doc = mathjax.document(document, {
         InputJax: this.tex,
         OutputJax: this.svg,
       });

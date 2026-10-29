@@ -124,12 +124,9 @@ export function generateSVG(input: GenerateSVGOptions): GenerateSVGResult {
         svgInnerContent = svgInnerContent
           .replace(/stroke="black"/g, `stroke="${escapedColor}"`)
           .replace(/fill="black"/g, `fill="${escapedColor}"`);
-      } else {
-        // Remove hardcoded colors to allow CSS/inheritance control
-        svgInnerContent = svgInnerContent
-          .replace(/ stroke="black"/g, '')
-          .replace(/ fill="black"/g, '');
       }
+      // Keep MathJax's default stroke/fill: SVG lines have no stroke by default,
+      // so removing the inherited stroke makes array rules disappear.
 
       const equation: Equation = {
         id: equationId,
